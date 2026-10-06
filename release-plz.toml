@@ -1,0 +1,28 @@
+# Release-plz configuration for teptris-rs
+#
+# Automatic versioning and changelog generation, the parsanol-rs
+# framework: conventional commits drive the bump (feat: minor, fix:
+# patch, !: breaking), release-plz opens the release PR, and the
+# publish on main runs through crates.io Trusted Publishing.
+# See: https://release-plz.dev/docs/config
+
+[workspace]
+# GitHub releases must exist: they are the visible record of what
+# shipped from each merged release PR.
+git_release_enable = true
+
+# Keep the lockfile fresh as part of the release PR.
+dependencies_update = true
+
+[changelog]
+# Include commit body in changelog
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for commit in commits %}
+- {{ commit.message | upper_first }}\
+{% if commit.breaking %} (BREAKING){% endif %}\
+{% if commit.author != "github-actions[bot]" %} by @{{ commit.author }}{% endif %}\
+{% endfor %}
+{% endfor %}
+"""
