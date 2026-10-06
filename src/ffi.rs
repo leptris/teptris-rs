@@ -102,8 +102,10 @@ extern "C" {
     pub fn teptris_node_integer(node: *const teptris_node, out: *mut i64) -> TeptrisStatus;
     pub fn teptris_node_float(node: *const teptris_node, out: *mut f64) -> TeptrisStatus;
     pub fn teptris_node_boolean(node: *const teptris_node, out: *mut bool) -> TeptrisStatus;
-    pub fn teptris_node_datetime(node: *const teptris_node, out: *mut teptris_datetime)
-        -> TeptrisStatus;
+    pub fn teptris_node_datetime(
+        node: *const teptris_node,
+        out: *mut teptris_datetime,
+    ) -> TeptrisStatus;
 
     pub fn teptris_node_array_length(node: *const teptris_node) -> usize;
     pub fn teptris_node_array_at(node: *const teptris_node, index: usize) -> *const teptris_node;

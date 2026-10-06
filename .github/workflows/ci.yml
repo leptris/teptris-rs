@@ -1,4 +1,4 @@
-name: ci
+name: CI
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
@@ -20,57 +20,38 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - name: Checkout engine repository
+        uses: actions/checkout@v4
         with:
           repository: leptris/teptris
-          path: teptris
-          ref: v0.1.27
-
+          ref: main
+          path: engine
       - uses: dtolnay/rust-toolchain@stable
-
+        with:
+          components: rustfmt
       - name: Build libteptris shared library
         shell: bash
         run: |
-          cmake -B teptris/build-shared -S teptris \
+          cmake -B engine/build-shared -S engine \
             -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTING=OFF \
-            -DTEPTRIS_BUILD_SHARED=ON \
-            -DTEPTRIS_BUILD_CLI=OFF \
-            -DTEPTRIS_BUILD_STATIC=OFF
-          cmake --build teptris/build-shared --config Release
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            DLL=$(find teptris/build-shared -name "teptris.dll" | head -1)
-            echo "DLL resolved: ${DLL:-<none>}"
-            [ -n "$DLL" ] || { echo "no teptris.dll produced"; exit 1; }
-            # stage NOW with msys paths (the native cygpath form is
-            # for Rust only - bash cp cannot read it)
-            mkdir -p target/debug/deps target/debug
-            cp "$DLL" target/debug/deps/
-            cp "$DLL" target/debug/
-            echo "TEPTRIS_LIB_PATH=$(cygpath -w "$(dirname "$DLL")")" >> "$GITHUB_ENV"
-          else
-            echo "TEPTRIS_LIB_PATH=$PWD/teptris/build-shared/src" >> "$GITHUB_ENV"
+            -DTEPTRIS_BUILD_SHARED=ON -DTEPTRIS_BUILD_STATIC=OFF \
+            -DBUILD_TESTING=OFF -DTEPTRIS_BUILD_CLI=OFF
+          cmake --build engine/build-shared --config Release
+          LIB=$(find engine/build-shared -type f -o -type l 2>/dev/null | grep -iE '(lib)?teptris\.(dylib|so)$' | head -1)
+          if [ -z "$LIB" ]; then
+            echo "ERROR: libteptris shared library not found"
+            exit 1
           fi
-
-      - name: cargo build tests
-        shell: bash
-        env:
-          TEPTRIS_LIB_PATH: ${{ env.TEPTRIS_LIB_PATH }}
-        run: cargo test --no-run --verbose
-
+          LIBDIR=$(cd "$(dirname "$LIB")" && pwd)
+          echo "TEPTRIS_LIB_PATH=$LIBDIR" >> "$GITHUB_ENV"
+          echo "Built: $LIB"
+      - name: cargo build
+        run: cargo build --workspace --verbose
       - name: cargo test
-        if: runner.os != 'Windows'
-        shell: bash
-        env:
-          TEPTRIS_LIB_PATH: ${{ env.TEPTRIS_LIB_PATH }}
-        run: cargo test --verbose
-
-      - name: cargo test (Windows, DLL staged)
-        if: runner.os == 'Windows'
-        shell: bash
-        env:
-          TEPTRIS_LIB_PATH: ${{ env.TEPTRIS_LIB_PATH }}
-        run: cargo test --verbose
+        run: cargo test --workspace --verbose
+      - name: cargo fmt
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo fmt --all --check

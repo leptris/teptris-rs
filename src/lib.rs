@@ -228,7 +228,12 @@ impl Document {
             if !doc.is_null() {
                 ffi::teptris_document_free(doc);
             }
-            return Err(ParseError { status: st, message, line, column });
+            return Err(ParseError {
+                status: st,
+                message,
+                line,
+                column,
+            });
         }
         Ok(doc)
     }
@@ -349,7 +354,10 @@ unsafe fn node_to_value(node: *const ffi::teptris_node) -> Result<Value, Error> 
                 let mut key: ffi::teptris_view = std::mem::zeroed();
                 let child = ffi::teptris_node_table_at(node, i, &mut key);
                 let bytes = std::slice::from_raw_parts(key.ptr as *const u8, key.len);
-                entries.push((String::from_utf8_lossy(bytes).into_owned(), node_to_value(child)?));
+                entries.push((
+                    String::from_utf8_lossy(bytes).into_owned(),
+                    node_to_value(child)?,
+                ));
             }
             Ok(Value::Table(Table { entries }))
         }
@@ -418,7 +426,10 @@ fn build(v: &Value) -> Result<Document, Error> {
         }
         // ownership transferred; the builder is consumed by finish
         let input = Vec::new(); // documents built this way own no input
-        Ok(Document { ptr: doc, _input: input })
+        Ok(Document {
+            ptr: doc,
+            _input: input,
+        })
     }
 }
 

@@ -1,6 +1,6 @@
 //! Round-trip and contract tests over the real shared library.
 
-use teptris::{loads, dump, dump_json, Datetime, DatetimeKind, Value};
+use teptris::{dump, dump_json, loads, Datetime, DatetimeKind, Value};
 
 #[test]
 fn loads_scalars() {
@@ -21,8 +21,10 @@ fn loads_preserves_table_order() {
 
 #[test]
 fn loads_nested_and_arrays() {
-    let v = loads(b"a = 1\n[t]\nk = 1.5\narr = [1, \"two\", [3]]\n[[items]]\nid = 1\n[[items]]\nid = 2\n")
-        .unwrap();
+    let v = loads(
+        b"a = 1\n[t]\nk = 1.5\narr = [1, \"two\", [3]]\n[[items]]\nid = 1\n[[items]]\nid = 2\n",
+    )
+    .unwrap();
     let t = v.get("t").and_then(Value::as_table).unwrap();
     assert_eq!(t.get("k").and_then(Value::as_float), Some(1.5));
     let arr = t.get("arr").and_then(Value::as_array).unwrap();
@@ -30,13 +32,18 @@ fn loads_nested_and_arrays() {
     assert_eq!(arr[2].as_array().unwrap()[0].as_integer(), Some(3));
     let items = v.get("items").and_then(Value::as_array).unwrap();
     assert_eq!(items.len(), 2);
-    assert_eq!(items[1].as_table().unwrap().get("id").unwrap().as_integer(), Some(2));
+    assert_eq!(
+        items[1].as_table().unwrap().get("id").unwrap().as_integer(),
+        Some(2)
+    );
 }
 
 #[test]
 fn loads_datetimes() {
-    let v = loads(b"o = 1979-05-27T07:32:00-07:00\nl = 1979-05-27T07:32:00\nd = 1979-05-27\nt = 07:32:00\n")
-        .unwrap();
+    let v = loads(
+        b"o = 1979-05-27T07:32:00-07:00\nl = 1979-05-27T07:32:00\nd = 1979-05-27\nt = 07:32:00\n",
+    )
+    .unwrap();
     let o = match v.get("o") {
         Some(Value::Datetime(dt)) => dt,
         other => panic!("expected offset datetime, got {:?}", other),
@@ -61,7 +68,10 @@ fn loads_datetimes() {
 #[test]
 fn loads_unicode() {
     let v = loads("s = \"caf\u{e9} \u{2615}\"\n".as_bytes()).unwrap();
-    assert_eq!(v.get("s").and_then(Value::as_str), Some("caf\u{e9} \u{2615}"));
+    assert_eq!(
+        v.get("s").and_then(Value::as_str),
+        Some("caf\u{e9} \u{2615}")
+    );
 }
 
 #[test]
@@ -83,7 +93,8 @@ fn roundtrip_through_dump() {
 
 #[test]
 fn roundtrip_datetimes_through_dump() {
-    let src = b"o = 1979-05-27T07:32:00-07:00\nd = 1979-05-27\nt = 07:32:00\nl = 1979-05-27T07:32:00\n";
+    let src =
+        b"o = 1979-05-27T07:32:00-07:00\nd = 1979-05-27\nt = 07:32:00\nl = 1979-05-27T07:32:00\n";
     let v = loads(src).unwrap();
     let toml = dump(&v).unwrap();
     assert_eq!(loads(toml.as_bytes()).unwrap(), v);
@@ -105,7 +116,10 @@ fn document_toml_string_is_canonical() {
     let doc = teptris::Document::parse(b"b = 2\na = 1\n").unwrap();
     let toml = doc.to_toml_string().unwrap();
     // canonical emit: parse(emit(d)) == d, insertion order kept
-    assert!(toml.contains("b = 2\na = 1") || toml.contains("b = 2\r\na = 1"), "{toml}");
+    assert!(
+        toml.contains("b = 2\na = 1") || toml.contains("b = 2\r\na = 1"),
+        "{toml}"
+    );
 }
 
 #[test]
