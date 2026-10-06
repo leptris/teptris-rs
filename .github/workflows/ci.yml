@@ -1,0 +1,76 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: cargo test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: leptris/teptris
+          path: teptris
+          ref: v0.1.27
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build libteptris shared library
+        shell: bash
+        run: |
+          cmake -B teptris/build-shared -S teptris \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=OFF \
+            -DTEPTRIS_BUILD_SHARED=ON \
+            -DTEPTRIS_BUILD_CLI=OFF \
+            -DTEPTRIS_BUILD_STATIC=OFF
+          cmake --build teptris/build-shared --config Release
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            DLL=$(find teptris/build-shared -name "teptris.dll" | head -1)
+            echo "DLL resolved: ${DLL:-<none>}"
+            [ -n "$DLL" ] || { echo "no teptris.dll produced"; exit 1; }
+            # stage NOW with msys paths (the native cygpath form is
+            # for Rust only - bash cp cannot read it)
+            mkdir -p target/debug/deps target/debug
+            cp "$DLL" target/debug/deps/
+            cp "$DLL" target/debug/
+            echo "TEPTRIS_LIB_PATH=$(cygpath -w "$(dirname "$DLL")")" >> "$GITHUB_ENV"
+          else
+            echo "TEPTRIS_LIB_PATH=$PWD/teptris/build-shared/src" >> "$GITHUB_ENV"
+          fi
+
+      - name: cargo build tests
+        shell: bash
+        env:
+          TEPTRIS_LIB_PATH: ${{ env.TEPTRIS_LIB_PATH }}
+        run: cargo test --no-run --verbose
+
+      - name: cargo test
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          TEPTRIS_LIB_PATH: ${{ env.TEPTRIS_LIB_PATH }}
+        run: cargo test --verbose
+
+      - name: cargo test (Windows, DLL staged)
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          TEPTRIS_LIB_PATH: ${{ env.TEPTRIS_LIB_PATH }}
+        run: cargo test --verbose

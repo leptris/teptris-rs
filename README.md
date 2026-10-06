@@ -34,11 +34,12 @@ takes ownership without the extra copy.
 
 The shared library is resolved by `build.rs`: set `TEPTRIS_LIB_PATH`
 to a directory containing `libteptris.{dylib,so,dll}` (CI builds it
-from source) or install libteptris on the linker path.
+from a teptris checkout) or install libteptris on the linker path.
 
 ```sh
-cmake -B ../../build-shared -S ../.. -DCMAKE_BUILD_TYPE=Release \
-  -DTEPTRIS_BUILD_SHARED=ON -DTEPTRIS_BUILD_CLI=OFF
-cmake --build ../../build-shared
-TEPTRIS_LIB_PATH=$PWD/../../build-shared/src cargo test
+git clone https://github.com/leptris/teptris ../teptris
+cmake -B ../teptris/build-shared -S ../teptris -DCMAKE_BUILD_TYPE=Release \
+  -DTEPTRIS_BUILD_SHARED=ON -DTEPTRIS_BUILD_CLI=OFF -DBUILD_TESTING=OFF
+cmake --build ../teptris/build-shared
+TEPTRIS_LIB_PATH=$PWD/../teptris/build-shared/src cargo test
 ```
