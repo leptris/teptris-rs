@@ -132,5 +132,8 @@ fn root_table_helpers() {
 
 #[test]
 fn engine_version_reports() {
-    assert!(teptris::engine_version().starts_with("0.1."));
+    // CI builds against engine main: never hard-code the minor here
+    // (a stale "0.1." prefix once stopped a release lane on 0.3.0)
+    let v = teptris::engine_version();
+    assert!(v.split('.').count() >= 3, "engine version: {v}");
 }
