@@ -18,9 +18,11 @@
 #   workflow "release.yml", environment left empty.
 # Until then phase 2 fails with "No Trusted Publishing config
 # found" and versions publish manually — phase 1 is unaffected.
-# Optional (release PRs that re-trigger CI): the org PAT in the
-# LEPTRIS_CI_PAT_TOKEN secret — without it, release PRs created
-# with the default token do not start their own CI runs.
+# Both phases run on the workflow's own github.token (contents +
+# pull-requests: write above). The org PAT in LEPTRIS_CI_PAT_TOKEN
+# predates this repo and 404s on ref creation here — release PRs
+# made with github.token do not re-trigger CI on themselves; once
+# the PAT's repository list includes teptris-rs, it can return.
 # See: https://release-plz.dev/docs/config
 
 name: Release
@@ -55,7 +57,7 @@ jobs:
         with:
           command: release-pr
         env:
-          GITHUB_TOKEN: ${{ secrets.LEPTRIS_CI_PAT_TOKEN || github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       # Phase 2 — publish what has landed on main. Fails (by
       # design, loudly) until Trusted Publishing is registered.
@@ -66,5 +68,5 @@ jobs:
       - name: Publish landed releases
         uses: MarcoIeni/release-plz-action@v0.5
         env:
-          GITHUB_TOKEN: ${{ secrets.LEPTRIS_CI_PAT_TOKEN || github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
