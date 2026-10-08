@@ -154,6 +154,13 @@ impl std::error::Error for ParseError {}
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Error(pub i32);
 
+#[derive(Clone, Copy)]
+enum Mode {
+    Toml,
+    Json,
+    JsonNatural,
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         unsafe {
@@ -253,22 +260,31 @@ impl Document {
 
     /// Canonical TOML (deterministic; parse(emit(d)) == d).
     pub fn to_toml_string(&self) -> Result<String, Error> {
-        self.emit_str(false)
+        self.emit_str(Mode::Toml)
     }
 
     /// The toml-test wire shape (tagged values) as a JSON string.
     pub fn to_json_string(&self) -> Result<String, Error> {
-        self.emit_str(true)
+        self.emit_str(Mode::Json)
     }
 
-    fn emit_str(&self, json: bool) -> Result<String, Error> {
+    /// Natural JSON (engine 0.3.0) as a string: real numbers,
+    /// booleans, RFC 3339 datetime strings; non-finite floats become
+    /// null (the documented lossy mapping).
+    pub fn to_json_natural_string(&self) -> Result<String, Error> {
+        self.emit_str(Mode::JsonNatural)
+    }
+
+    fn emit_str(&self, mode: Mode) -> Result<String, Error> {
         unsafe {
             let mut buf: *mut c_char = std::ptr::null_mut();
             let mut len: usize = 0;
-            let st = if json {
-                ffi::teptris_document_emit_json(self.ptr, &mut buf, &mut len)
-            } else {
-                ffi::teptris_document_emit(self.ptr, &mut buf, &mut len)
+            let st = match mode {
+                Mode::Toml => ffi::teptris_document_emit(self.ptr, &mut buf, &mut len),
+                Mode::Json => ffi::teptris_document_emit_json(self.ptr, &mut buf, &mut len),
+                Mode::JsonNatural => {
+                    ffi::teptris_document_emit_json_natural(self.ptr, &mut buf, &mut len)
+                }
             };
             check(st)?;
             let out = std::slice::from_raw_parts(buf as *const u8, len).to_vec();
@@ -390,6 +406,14 @@ pub fn dump(v: &Value) -> Result<String, Error> {
 pub fn dump_json(v: &Value) -> Result<String, Error> {
     let doc = build(v)?;
     doc.to_json_string()
+}
+
+/// Emit a [`Value`] as natural JSON (engine 0.3.0): real numbers,
+/// booleans, RFC 3339 datetime strings, non-finite floats as null —
+/// the JSON a host wants, straight into any JSON parser.
+pub fn dump_json_natural(v: &Value) -> Result<String, Error> {
+    let doc = build(v)?;
+    doc.to_json_natural_string()
 }
 
 fn build(v: &Value) -> Result<Document, Error> {
