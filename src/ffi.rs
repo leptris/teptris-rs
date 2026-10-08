@@ -131,6 +131,11 @@ extern "C" {
         buf: *mut *mut c_char,
         len: *mut usize,
     ) -> TeptrisStatus;
+    pub fn teptris_document_emit_json_natural(
+        doc: *const teptris_document,
+        buf: *mut *mut c_char,
+        len: *mut usize,
+    ) -> TeptrisStatus;
 
     pub fn teptris_document_flatten(
         doc: *const teptris_document,

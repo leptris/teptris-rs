@@ -137,3 +137,28 @@ fn engine_version_reports() {
     let v = teptris::engine_version();
     assert!(v.split('.').count() >= 3, "engine version: {v}");
 }
+
+#[test]
+fn dump_json_natural_is_host_json() {
+    let v = loads(
+        b"i = 42\nf = 3.5\nt = true\ns = \"hi\"\nat = 2026-10-09T12:00:00Z\nnan = nan\ninf = inf\n",
+    )
+    .unwrap();
+    let json = teptris::dump_json_natural(&v).unwrap();
+    // real numbers and booleans (no tagged "type"/"value" wrapping)
+    assert!(json.contains("\"i\":42"), "{json}");
+    assert!(json.contains("\"f\":3.5"), "{json}");
+    assert!(json.contains("\"t\":true"), "{json}");
+    // datetime as an RFC 3339 string, non-finite floats as null
+    assert!(json.contains("\"at\":\"2026-10-09T12:00:00Z\""), "{json}");
+    assert!(json.contains("\"nan\":null"), "{json}");
+    assert!(json.contains("\"inf\":null"), "{json}");
+    assert!(!json.contains("\"type\""), "{json}");
+}
+
+#[test]
+fn document_json_natural_string() {
+    let doc = teptris::Document::parse(b"v = 2.5\n").unwrap();
+    let json = doc.to_json_natural_string().unwrap();
+    assert!(json.contains("\"v\":2.5"), "{json}");
+}
