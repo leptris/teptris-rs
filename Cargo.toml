@@ -3,7 +3,7 @@ members = ["descriptor"]
 
 [package]
 name = "teptris"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Rust bindings for libteptris — TOML 1.1 at C speed, no fallback"
 license = "MIT"
