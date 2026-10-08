@@ -53,7 +53,7 @@ jobs:
       - name: Open/update the release PR
         uses: MarcoIeni/release-plz-action@v0.5
         with:
-          command: update
+          command: release-pr
         env:
           GITHUB_TOKEN: ${{ secrets.LEPTRIS_CI_PAT_TOKEN || github.token }}
 
