@@ -21,8 +21,7 @@ body = """
 ### {{ group | upper_first }}
 {% for commit in commits %}
 - {{ commit.message | upper_first }}\
-{% if commit.breaking %} (BREAKING){% endif %}\
-{% if commit.author != "github-actions[bot]" %} by @{{ commit.author }}{% endif %}\
+{% if commit.breaking %} (BREAKING){% endif %}
 {% endfor %}
 {% endfor %}
 """
