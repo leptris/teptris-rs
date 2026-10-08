@@ -6,15 +6,21 @@
 # short-lived publish token, so no CARGO_REGISTRY_TOKEN secret ever
 # exists.
 #
-# One-time setup (owner, crates.io UI):
+# The pipeline runs in two phases, decoupled on purpose:
+#   1. update — opens/updates the release PR (version bump +
+#      changelog + lockfile). Needs only GITHUB_TOKEN, so release
+#      PRs flow even while publishing is not yet wired up.
+#   2. release — exchanges the OIDC token and publishes landed
+#      versions, creating the GitHub releases.
+#
+# One-time setup (owner, crates.io UI) for phase 2:
 #   Account settings → Trusted Publishing → add leptris/teptris-rs,
 #   workflow "release.yml", environment left empty.
+# Until then phase 2 fails with "No Trusted Publishing config
+# found" and versions publish manually — phase 1 is unaffected.
 # Optional (release PRs that re-trigger CI): the org PAT in the
 # LEPTRIS_CI_PAT_TOKEN secret — without it, release PRs created
 # with the default token do not start their own CI runs.
-#
-# Until TP is configured on crates.io, the auth step fails and this
-# job stops — the intended state while versions publish manually.
 # See: https://release-plz.dev/docs/config
 
 name: Release
@@ -42,11 +48,22 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      # Phase 1 — release PR management. Independent of registry
+      # auth so it runs regardless of Trusted Publishing state.
+      - name: Open/update the release PR
+        uses: MarcoIeni/release-plz-action@v0.5
+        with:
+          command: update
+        env:
+          GITHUB_TOKEN: ${{ secrets.LEPTRIS_CI_PAT_TOKEN || github.token }}
+
+      # Phase 2 — publish what has landed on main. Fails (by
+      # design, loudly) until Trusted Publishing is registered.
       - name: Exchange OIDC for a crates.io publish token
         id: auth
         uses: rust-lang/crates-io-auth-action@v1
 
-      - name: Run release-plz
+      - name: Publish landed releases
         uses: MarcoIeni/release-plz-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.LEPTRIS_CI_PAT_TOKEN || github.token }}
