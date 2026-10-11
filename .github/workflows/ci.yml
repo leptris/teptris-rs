@@ -52,6 +52,14 @@ jobs:
         run: cargo build --workspace --verbose
       - name: cargo test
         run: cargo test --workspace --verbose
+      # rust tier: teptris-rs vs the toml crate over the engine
+      # corpus — report only, no gate (runner noise; the family
+      # referee limit applies).
+      - name: rust tier bench (report only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          python3 engine/scripts/gen_bench_corpus.py corpus
+          cargo bench --bench tier -- corpus 20
       - name: cargo fmt
         if: matrix.os == 'ubuntu-latest'
         run: cargo fmt --all --check
