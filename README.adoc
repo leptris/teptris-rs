@@ -41,8 +41,12 @@ cargo add teptris
   with real `i64`/`u32` fields).
 * `dump(&Value) -> Result<String, Error>` — canonical TOML through the
   engine's builder (the emitter stays the single source of truth).
+* `dump_json(&Value)` — the toml-test conformance JSON (tagged values).
+* `dump_json_natural(&Value)` (0.1.2) — the host JSON view: real
+  numbers, booleans, RFC 3339 datetime strings, non-finite floats as
+  null. Straight into any JSON parser; the engine's fastest emit.
 * `Document` — parse / `to_toml_string` / `to_json_string` (toml-test
-  conformance dialect) / `to_value`.
+  conformance dialect) / `to_json_natural_string` / `to_value`.
 * `ParseError` carries `message` + 1-based `line`/`column`.
 
 == Zero-copy note
@@ -72,4 +76,5 @@ cmake -B ../teptris/build-shared -S ../teptris -DCMAKE_BUILD_TYPE=Release \
   -DTEPTRIS_BUILD_SHARED=ON -DTEPTRIS_BUILD_CLI=OFF -DBUILD_TESTING=OFF
 cmake --build ../teptris/build-shared
 TEPTRIS_LIB_PATH=$PWD/../teptris/build-shared/src cargo test
+TEPTRIS_LIB_PATH=$PWD/../teptris/build-shared/src cargo bench --bench tier -- ../teptris/bench-corpus
 ----
