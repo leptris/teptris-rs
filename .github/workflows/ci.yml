@@ -22,9 +22,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Checkout engine repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: leptris/teptris
           ref: main
