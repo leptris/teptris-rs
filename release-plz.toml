@@ -7,6 +7,10 @@
 # See: https://release-plz.dev/docs/config
 
 [workspace]
+# Only feat/fix commits trigger a release PR — ci/chore/docs/bench
+# pushes would otherwise open empty patch proposals (#16 proposed
+# 0.1.3 for a checkout bump).
+release_commits = "^(feat|fix)"
 # GitHub releases must exist: they are the visible record of what
 # shipped from each merged release PR.
 git_release_enable = true
