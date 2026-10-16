@@ -47,7 +47,33 @@ cargo add teptris
   null. Straight into any JSON parser; the engine's fastest emit.
 * `Document` — parse / `to_toml_string` / `to_json_string` (toml-test
   conformance dialect) / `to_json_natural_string` / `to_value`.
+* `Descriptor::build(&[PlanRow])` + `walk(&Document)` — compile a plan
+  once, materialize only the planned keys in ONE native pass
+  (`PlanRow::scalar/collection/raw/nested`); unplanned keys are never
+  touched, MISSING rows are absent.
 * `ParseError` carries `message` + 1-based `line`/`column`.
+
+== Descriptor plans
+
+[source,rust]
+----
+use teptris::plan::{Descriptor, PlanRow};
+
+let d = Descriptor::build(&[
+    PlanRow::scalar("title"),
+    PlanRow::collection("tags"),
+    PlanRow::nested("owner", vec![
+        PlanRow::scalar("name"),
+        PlanRow::raw("meta"),
+    ]),
+])?;
+
+let doc = teptris::Document::parse(b"title = "d"
+[owner]
+name = "r"
+")?;
+let v = d.walk(&doc)?; // only planned keys materialize
+----
 
 == Zero-copy note
 
