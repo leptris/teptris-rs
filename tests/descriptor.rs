@@ -169,3 +169,21 @@ fn walk_many_documents_with_one_plan() {
         assert_eq!(t.len(), 1);
     }
 }
+
+#[test]
+fn sibling_nested_rows_get_distinct_sub_plans() {
+    let d = Descriptor::build(&[
+        PlanRow::nested("a", vec![PlanRow::scalar("x")]),
+        PlanRow::nested("b", vec![PlanRow::scalar("y")]),
+    ])
+    .unwrap();
+    let doc = teptris::Document::parse(b"[a]\nx = 1\n[b]\ny = 2\n").unwrap();
+    let t = d.walk(&doc).unwrap().as_table().unwrap().clone();
+    let a = t.get("a").and_then(|v| v.as_table()).unwrap();
+    let b = t.get("b").and_then(|v| v.as_table()).unwrap();
+    // the sibling-nested layout bug made b walk a's sub-plan: y absent
+    assert_eq!(a.get("x").and_then(|v| v.as_integer()), Some(1));
+    assert_eq!(b.get("y").and_then(|v| v.as_integer()), Some(2));
+    assert!(a.get("y").is_none());
+    assert!(b.get("x").is_none());
+}
