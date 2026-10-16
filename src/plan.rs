@@ -132,7 +132,7 @@ fn layout(
     // nested row's sub-plan is laid out after them — first[] grows in
     // plan order and the sub index is known at row-push time.
     let idx = first.len() as u32 - 1;
-    let mut pending: Vec<(&PlanRow, u32)> = Vec::new();
+    let mut pending: Vec<(usize, &PlanRow)> = Vec::new();
     for r in rows {
         let cname = CString::new(r.name.as_str()).expect("plan row name");
         let ptr = cname.as_ptr();
@@ -153,23 +153,24 @@ fn layout(
                 kind: ffi::TEPTRIS_PLAN_RAW,
                 sub: 0,
             }),
-            PlanRowKind::Nested(children) => {
-                // the sub-plan's index will be first.len() once started
-                let sub = first.len() as u32;
+            PlanRowKind::Nested(_) => {
+                // sub is patched after the child block is laid out —
+                // SIBLING nested rows must not capture the same index
+                let slot = flat.len();
                 flat.push(ffi::teptris_plan_row {
                     name: ptr,
                     kind: ffi::TEPTRIS_PLAN_NESTED,
-                    sub,
+                    sub: 0,
                 });
-                pending.push((r, sub));
+                pending.push((slot, r));
             }
         }
     }
-    for (r, sub) in pending {
+    for (slot, r) in pending {
         if let PlanRowKind::Nested(children) = &r.kind {
             first.push(flat.len() as u32);
             let got = layout(children, flat, first, names);
-            debug_assert_eq!(got, sub);
+            flat[slot].sub = got;
         }
     }
     idx
