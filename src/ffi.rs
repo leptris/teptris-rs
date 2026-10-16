@@ -85,6 +85,30 @@ pub struct teptris_options {
     pub _reserved: [u32; 3],
 }
 
+pub struct teptris_plan;
+pub struct teptris_plan_result;
+
+pub const TEPTRIS_PLAN_ABI_VERSION: u32 = 1;
+pub const TEPTRIS_PLAN_SCALAR: u8 = 1;
+pub const TEPTRIS_PLAN_COLLECTION: u8 = 2;
+pub const TEPTRIS_PLAN_NESTED: u8 = 3;
+pub const TEPTRIS_PLAN_RAW: u8 = 4;
+
+#[repr(C)]
+pub struct teptris_plan_row {
+    pub name: *const c_char,
+    pub kind: u8,
+    pub sub: u32,
+}
+
+#[repr(C)]
+pub struct teptris_plan_spec {
+    pub abi_version: u32,
+    pub plan_count: u32,
+    pub plans: *const teptris_plan_row,
+    pub plan_first_row: *const u32,
+}
+
 extern "C" {
     pub fn teptris_parse(
         data: *const c_char,
@@ -136,6 +160,108 @@ extern "C" {
         buf: *mut *mut c_char,
         len: *mut usize,
     ) -> TeptrisStatus;
+
+    pub fn teptris_plan_build(
+        spec: *const teptris_plan_spec,
+        status: *mut TeptrisStatus,
+    ) -> *mut teptris_plan;
+    pub fn teptris_plan_free(plan: *mut teptris_plan);
+    pub fn teptris_plan_walk(
+        plan: *const teptris_plan,
+        node: *const teptris_node,
+        status: *mut TeptrisStatus,
+    ) -> *mut teptris_plan_result;
+    pub fn teptris_plan_result_free(result: *mut teptris_plan_result);
+    pub fn teptris_plan_row_count(plan: *const teptris_plan, plan_idx: u32) -> u32;
+    pub fn teptris_plan_row_kind_at(plan: *const teptris_plan, plan_idx: u32, row: u32) -> u8;
+    pub fn teptris_plan_row_sub_at(plan: *const teptris_plan, plan_idx: u32, row: u32) -> u32;
+    pub fn teptris_plan_row_name_at(
+        plan: *const teptris_plan,
+        plan_idx: u32,
+        row: u32,
+    ) -> *const c_char;
+    pub fn teptris_plan_result_kind_at(result: *const teptris_plan_result, row: u32) -> u8;
+    pub fn teptris_plan_result_value_kind_at(result: *const teptris_plan_result, row: u32) -> u8;
+    pub fn teptris_plan_result_string_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        out: *mut teptris_view,
+    ) -> TeptrisStatus;
+    pub fn teptris_plan_result_integer_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        out: *mut i64,
+    ) -> TeptrisStatus;
+    pub fn teptris_plan_result_float_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        out: *mut f64,
+    ) -> TeptrisStatus;
+    pub fn teptris_plan_result_boolean_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        out: *mut bool,
+    ) -> TeptrisStatus;
+    pub fn teptris_plan_result_datetime_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        out: *mut teptris_datetime,
+    ) -> TeptrisStatus;
+    pub fn teptris_plan_result_array_len_at(result: *const teptris_plan_result, row: u32) -> u32;
+    pub fn teptris_plan_result_array_kind_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        i: u32,
+    ) -> u8;
+    pub fn teptris_plan_result_array_value_kind_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        i: u32,
+    ) -> u8;
+    pub fn teptris_plan_result_array_string_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        i: u32,
+        out: *mut teptris_view,
+    ) -> TeptrisStatus;
+    pub fn teptris_plan_result_array_integer_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        i: u32,
+        out: *mut i64,
+    ) -> TeptrisStatus;
+    pub fn teptris_plan_result_array_float_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        i: u32,
+        out: *mut f64,
+    ) -> TeptrisStatus;
+    pub fn teptris_plan_result_array_boolean_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        i: u32,
+        out: *mut bool,
+    ) -> TeptrisStatus;
+    pub fn teptris_plan_result_array_datetime_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        i: u32,
+        out: *mut teptris_datetime,
+    ) -> TeptrisStatus;
+    pub fn teptris_plan_result_row_view(
+        result: *const teptris_plan_result,
+        row: u32,
+    ) -> *const teptris_plan_result;
+    pub fn teptris_plan_result_array_entry_at(
+        result: *const teptris_plan_result,
+        row: u32,
+        i: u32,
+    ) -> *const teptris_plan_result;
+    pub fn teptris_plan_result_view_free(view: *const teptris_plan_result);
+    pub fn teptris_plan_result_raw_at(
+        result: *const teptris_plan_result,
+        row: u32,
+    ) -> *const teptris_node;
 
     pub fn teptris_document_flatten(
         doc: *const teptris_document,
