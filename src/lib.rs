@@ -70,6 +70,9 @@ pub struct Table {
 }
 
 impl Table {
+    pub fn from_entries(entries: Vec<(String, Value)>) -> Table {
+        Table { entries }
+    }
     pub fn get(&self, key: &str) -> Option<&Value> {
         self.entries.iter().find(|(k, _)| k == key).map(|(_, v)| v)
     }
@@ -151,6 +154,9 @@ impl fmt::Display for ParseError {
 impl std::error::Error for ParseError {}
 
 /// A non-parse binding failure (allocation, bad argument, state).
+pub mod plan;
+pub use plan::{Descriptor, PlanRow, PlanRowKind};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Error(pub i32);
 
@@ -188,7 +194,7 @@ fn check(status: i32) -> Result<(), Error> {
 /// A parsed TOML document. Owns its copy of the input (see the module
 /// docs); the tree is freed on drop.
 pub struct Document {
-    ptr: *mut ffi::teptris_document,
+    pub(crate) ptr: *mut ffi::teptris_document,
     // Must drop AFTER ptr: views point into it until the free.
     _input: Vec<u8>,
 }
