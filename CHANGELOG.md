@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Descriptor — planned-key materialization (the rust twin)
+
+
+### Fixed
+
+- Sibling nested rows must not share a sub-plan
+
+- Only feat/fix commits trigger release PRs
+
+
+### Other
+
+- Checkout v7 — clears the Node.js 20 deprecation annotation
+
+- Release v0.1.2
+
+
+### Added
+
 - Dump_json_natural — the natural-JSON emit for hosts
 
 
