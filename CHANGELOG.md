@@ -7,12 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- Descriptor — planned-key materialization (the rust twin)
-
-
 ### Fixed
+
+- CI builds against engine tag v0.3.3 (was: engine `main`) — brings the
+  plan depth cap (engine v0.3.2) and the dom clone NULL-memcpy UB guards
+  (engine v0.3.3) into every CI build; the pin moves with the release
+  per the family versioning law.
 
 - Sibling nested rows must not share a sub-plan
 
