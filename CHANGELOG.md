@@ -7,54 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-18
+
 ### Fixed
 
 - CI builds against engine tag v0.3.3 (was: engine `main`) — brings the
   plan depth cap (engine v0.3.2) and the dom clone NULL-memcpy UB guards
   (engine v0.3.3) into every CI build; the pin moves with the release
   per the family versioning law.
-- Sibling nested rows must not share a sub-plan
-- Only feat/fix commits trigger release PRs
-- Checkout v7 — clears the Node.js 20 deprecation annotation
 
-### Other
-
-- The descriptor-plan API in the readme
-
+## [0.1.3] - 2026-10-17
 
 ### Added
 
 - Dump_json_natural — the natural-JSON emit for hosts
-
+- Descriptor — planned-key materialization; sibling nested rows no
+  longer share a sub-plan
+- The descriptor-plan API and the JSON emit surface in the readme
 
 ### Fixed
 
 - Drop the author byline — commit.author is an object
-
-- Engine version assert must not hard-code the minor - CI builds against engine main (0.3.0 today)
-
+- Engine version assert must not hard-code the minor — CI builds
+  against the engine main line
+- Only feat/fix commits trigger release PRs
+- actions/checkout v7 — clears the Node.js 20 deprecation annotation
 
 ### Other
-
-- The JSON emit surface in the readme
 
 - The rust tier — teptris-rs vs the toml crate
-
-- Release v0.1.2
-
 - Run on github.token — the org PAT 404s in this repo
-
 - The action's command is release-pr, not update
-
 - Decouple release-PR opening from registry auth
-
-
-### Fixed
-
-- Engine version assert must not hard-code the minor - CI builds against engine main (0.3.0 today) by @[object]
-
-### Other
-
-- Run on github.token — the org PAT 404s in this repo by @[object]
-- The action's command is release-pr, not update by @[object]
-- Decouple release-PR opening from registry auth by @[object]
