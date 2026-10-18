@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Pin the engine checkout to v0.3.4
+
+
+### Other
+
+- Dedupe the Unreleased section for 0.1.5
+
+- Release v0.1.5
+
+
+### Fixed
+
 - CI builds against engine tag v0.3.4 — `teptris_plan_build` no longer
   writes debug output to stderr (a DBG fprintf shipped in the v0.3.2
   depth gate spammed one line per plan row in every host).
