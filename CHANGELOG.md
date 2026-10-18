@@ -9,31 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Pin the engine checkout to v0.3.3
-
-
-### Other
-
-- The descriptor-plan API in the readme
-
-
-### Fixed
-
 - CI builds against engine tag v0.3.3 (was: engine `main`) — brings the
   plan depth cap (engine v0.3.2) and the dom clone NULL-memcpy UB guards
   (engine v0.3.3) into every CI build; the pin moves with the release
   per the family versioning law.
-
 - Sibling nested rows must not share a sub-plan
-
 - Only feat/fix commits trigger release PRs
-
+- Checkout v7 — clears the Node.js 20 deprecation annotation
 
 ### Other
 
-- Checkout v7 — clears the Node.js 20 deprecation annotation
-
-- Release v0.1.2
+- The descriptor-plan API in the readme
 
 
 ### Added
