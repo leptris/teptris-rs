@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Pin the engine checkout to v0.3.3
+
+
+### Other
+
+- The descriptor-plan API in the readme
+
+
+### Fixed
+
 - CI builds against engine tag v0.3.3 (was: engine `main`) — brings the
   plan depth cap (engine v0.3.2) and the dom clone NULL-memcpy UB guards
   (engine v0.3.3) into every CI build; the pin moves with the release
