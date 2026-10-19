@@ -1,5 +1,9 @@
 = teptris (Rust bindings)
 
+**Mission: be the best TOML parser and builder ever made — in C, Ruby,
+Rust, and JS — measured, not claimed.** The bar and the family ledger:
+https://github.com/leptris/teptris/blob/main/BEST-EVER.md[BEST-EVER.md].
+
 TOML 1.1 for Rust at libteptris speed — hand-maintained FFI over the
 C99 engine, no fallback. https://crates.io/crates/teptris[Published on
 crates.io]; the descriptor-plan ABI crate ships alongside it as
