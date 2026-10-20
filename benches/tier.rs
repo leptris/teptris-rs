@@ -42,7 +42,9 @@ fn main() {
     shapes.sort();
 
     println!("shape                 loads            dumps -> TOML    (ms, best-of-{reps})");
-    println!("shape                 teptris    toml   teptris    toml   | native-rt toml-rt toml_edit");
+    println!(
+        "shape                 teptris    toml   teptris    toml   | native-rt toml-rt toml_edit"
+    );
     for path in shapes {
         let src = fs::read_to_string(&path).expect("read");
         let name = Path::new(&path)
@@ -92,8 +94,7 @@ fn main() {
             let bytes = src.as_bytes().to_vec();
             best_of(
                 move || {
-                    let doc = teptris::Document::parse(&bytes)
-                        .expect("teptris parse");
+                    let doc = teptris::Document::parse(&bytes).expect("teptris parse");
                     doc.to_toml_string().expect("teptris emit");
                 },
                 reps,
