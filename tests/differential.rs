@@ -52,7 +52,12 @@ fn norm(v: &teptris::Value) -> Val {
             }
             teptris::DatetimeKind::LocalDateTime => format!(
                 "D{:04}-{:02}-{:02}T{:02}:{:02}:{:02}{}",
-                d.year, d.month, d.day, d.hour, d.minute, d.second,
+                d.year,
+                d.month,
+                d.day,
+                d.hour,
+                d.minute,
+                d.second,
                 ms3(d.nanosecond)
             ),
             teptris::DatetimeKind::Offset => {
@@ -67,8 +72,14 @@ fn norm(v: &teptris::Value) -> Val {
                 };
                 format!(
                     "D{:04}-{:02}-{:02}T{:02}:{:02}:{:02}{}{}",
-                    d.year, d.month, d.day, d.hour, d.minute, d.second,
-                    ms3(d.nanosecond), off
+                    d.year,
+                    d.month,
+                    d.day,
+                    d.hour,
+                    d.minute,
+                    d.second,
+                    ms3(d.nanosecond),
+                    off
                 )
             }
         }),
@@ -141,9 +152,7 @@ fn norm_toml(v: &toml::Value) -> Val {
 
 fn eq(a: &Val, b: &Val) -> bool {
     match (a, b) {
-        (Val::Arr(x), Val::Arr(y)) => {
-            x.len() == y.len() && x.iter().zip(y).all(|(a, b)| eq(a, b))
-        }
+        (Val::Arr(x), Val::Arr(y)) => x.len() == y.len() && x.iter().zip(y).all(|(a, b)| eq(a, b)),
         (Val::Table(x), Val::Table(y)) => {
             x.len() == y.len()
                 && x.iter()
