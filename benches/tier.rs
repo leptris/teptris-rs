@@ -4,6 +4,7 @@
 //!   cargo bench --bench tier -- corpus-dir reps
 use std::fs;
 use std::path::Path;
+use std::str::FromStr;
 use std::time::Instant;
 
 fn best_of<F: FnMut()>(mut f: F, reps: u32) -> f64 {
@@ -41,7 +42,7 @@ fn main() {
     shapes.sort();
 
     println!("shape                 loads            dumps -> TOML    (ms, best-of-{reps})");
-    println!("shape                 teptris    toml   teptris    toml");
+    println!("shape                 teptris    toml   teptris    toml   | native-rt toml-rt toml_edit");
     for path in shapes {
         let src = fs::read_to_string(&path).expect("read");
         let name = Path::new(&path)
@@ -84,12 +85,50 @@ fn main() {
             reps,
         );
 
+        /* roundtrip cell: parse + serialize of the SAME shape - the
+         * native-doc path (the Document IS the engine DOM;
+         * to_toml_string is the C emitter) vs the dict roundtrips */
+        let tep_rt = {
+            let bytes = src.as_bytes().to_vec();
+            best_of(
+                move || {
+                    let doc = teptris::Document::parse(&bytes)
+                        .expect("teptris parse");
+                    doc.to_toml_string().expect("teptris emit");
+                },
+                reps,
+            )
+        };
+        let toml_rt = {
+            let s = src.clone();
+            best_of(
+                move || {
+                    let v: toml::Value = toml::from_str(&s).expect("toml parse");
+                    toml::to_string(&v).expect("toml dump");
+                },
+                reps,
+            )
+        };
+        let toml_edit_rt = {
+            let s = src.clone();
+            best_of(
+                move || {
+                    let d: toml_edit::DocumentMut = s.parse().expect("toml_edit parse");
+                    d.to_string();
+                },
+                reps,
+            )
+        };
+
         println!(
-            "{name:<20} {} {} {} {}",
+            "{name:<20} {} {} {} {} | rt {} {} {}",
             fmt(Some(tep_loads)),
             fmt(Some(toml_loads)),
             fmt(Some(tep_dump)),
             fmt(Some(toml_dump)),
+            fmt(Some(tep_rt)),
+            fmt(Some(toml_rt)),
+            fmt(Some(toml_edit_rt)),
         );
     }
 }
