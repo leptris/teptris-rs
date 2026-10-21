@@ -4,6 +4,7 @@
 //!   cargo bench --bench tier -- corpus-dir reps
 use std::fs;
 use std::path::Path;
+use std::str::FromStr;
 use std::time::Instant;
 
 fn best_of<F: FnMut()>(mut f: F, reps: u32) -> f64 {
@@ -40,8 +41,8 @@ fn main() {
         .collect();
     shapes.sort();
 
-    println!("shape                 loads            dumps -> TOML    (ms, best-of-{reps})");
-    println!("shape                 teptris    toml   teptris    toml");
+    println!("shape                 loads            dumps -> TOML    roundtrip (load+dump)   (ms, best-of-{reps})");
+    println!("shape                 teptris    toml   teptris    toml   teptris     toml     edit");
     for path in shapes {
         let src = fs::read_to_string(&path).expect("read");
         let name = Path::new(&path)
@@ -84,12 +85,41 @@ fn main() {
             reps,
         );
 
+        // roundtrip cell: parse + serialize of the SAME source, the
+        // config-reserialization shape the native-doc APIs serve in
+        // the other bindings
+        let tep_rt = best_of(
+            || {
+                let v = teptris::loads(src.as_bytes()).expect("teptris rt");
+                teptris::dump(&v).expect("teptris rt dump");
+            },
+            reps,
+        );
+        let toml_rt = best_of(
+            || {
+                let v: toml::Value = toml::from_str(&src).expect("toml rt");
+                toml::to_string(&v).expect("toml rt dump");
+            },
+            reps,
+        );
+        let edit_rt = best_of(
+            || {
+                let d = toml_edit::DocumentMut::from_str(&src)
+                    .expect("edit parse");
+                d.to_string();
+            },
+            reps,
+        );
+
         println!(
-            "{name:<20} {} {} {} {}",
+            "{name:<20} {} {} {} {} {} {} {}",
             fmt(Some(tep_loads)),
             fmt(Some(toml_loads)),
             fmt(Some(tep_dump)),
             fmt(Some(toml_dump)),
+            fmt(Some(tep_rt)),
+            fmt(Some(toml_rt)),
+            fmt(Some(edit_rt)),
         );
     }
 }
