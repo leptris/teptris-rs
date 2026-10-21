@@ -104,8 +104,7 @@ fn main() {
         );
         let edit_rt = best_of(
             || {
-                let d = toml_edit::DocumentMut::from_str(&src)
-                    .expect("edit parse");
+                let d = toml_edit::DocumentMut::from_str(&src).expect("edit parse");
                 d.to_string();
             },
             reps,
