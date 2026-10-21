@@ -17,6 +17,7 @@ build = "build.rs"
 [dev-dependencies]
 teptris-descriptor = { path = "descriptor", features = ["link"] }
 toml = "0.8"
+toml_edit = "0.22"
 
 [[bench]]
 name = "tier"

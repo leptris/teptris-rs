@@ -103,6 +103,7 @@ version = "0.1.5"
 dependencies = [
  "teptris-descriptor",
  "toml",
+ "toml_edit",
 ]
 
 [[package]]
