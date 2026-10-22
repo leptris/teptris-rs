@@ -85,6 +85,10 @@ impl Table {
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
+    /// Consumes the table, returning the insertion-ordered entries.
+    pub fn into_entries(self) -> Vec<(String, Value)> {
+        self.entries
+    }
 }
 
 impl Value {
@@ -155,6 +159,51 @@ impl std::error::Error for ParseError {}
 
 /// A non-parse binding failure (allocation, bad argument, state).
 pub mod plan;
+#[cfg(feature = "serde")]
+pub mod serde;
+// the toml-crate convention: the entry points sit at the crate root
+#[cfg(feature = "serde")]
+pub use serde::{from_str, to_string};
+
+impl fmt::Display for Datetime {
+    /// The TOML forms: `1979-05-27T07:32:00.999999+05:30` for
+    /// offset datetimes, `1979-05-27T07:32:00` for local datetimes,
+    /// `1979-05-27` for dates, `07:32:00` for times. The fractional
+    /// part is emitted only when the nanoseconds are nonzero.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.kind {
+            DatetimeKind::Offset => {
+                write!(
+                    f,
+                    "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
+                    self.year, self.month, self.day, self.hour, self.minute, self.second
+                )?;
+                if self.nanosecond != 0 {
+                    write!(f, ".{:09}", self.nanosecond)?;
+                }
+                let off = self.offset_seconds.unwrap_or(0);
+                let sign = if off < 0 { '-' } else { '+' };
+                let a = off.abs();
+                write!(f, "{}{:02}:{:02}", sign, a / 3600, (a % 3600) / 60)
+            }
+            DatetimeKind::LocalDateTime => {
+                write!(
+                    f,
+                    "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
+                    self.year, self.month, self.day, self.hour, self.minute, self.second
+                )?;
+                if self.nanosecond != 0 {
+                    write!(f, ".{:09}", self.nanosecond)?;
+                }
+                Ok(())
+            }
+            DatetimeKind::Date => write!(f, "{:04}-{:02}-{:02}", self.year, self.month, self.day),
+            DatetimeKind::Time => {
+                write!(f, "{:02}:{:02}:{:02}", self.hour, self.minute, self.second)
+            }
+        }
+    }
+}
 pub use plan::{Descriptor, PlanRow, PlanRowKind};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
