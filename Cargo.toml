@@ -29,3 +29,8 @@ toml_edit = "0.22"
 [[bench]]
 name = "tier"
 harness = false
+
+[[bench]]
+name = "serde_tier"
+harness = false
+required-features = ["serde"]
