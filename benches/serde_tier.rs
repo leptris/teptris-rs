@@ -113,6 +113,18 @@ fn main() {
         t_v_toml / t_v_tepris
     );
 
+    // the plan-fusion ceiling: derive minus Value = the cost of the
+    // Value->struct walk. A direct-into-struct path (the descriptor/
+    // plan fusion) can only remove THIS layer, so the number bounds
+    // the entire follow-up's upside.
+    let layer = t_teptris - t_v_tepris;
+    println!(
+        "{:<44} {:>9.2} ms ({:.1}% of teptris total)\n",
+        "-> plan-fusion ceiling (derive minus Value)",
+        layer,
+        layer / t_teptris * 100.0
+    );
+
     // serialize side: struct -> TOML text
     let doc: Doc = teptris::from_str(&src).unwrap();
     let t_ser = bench("teptris  to_string(&Doc)", 20, || {
