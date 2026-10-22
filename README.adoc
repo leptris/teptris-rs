@@ -51,6 +51,14 @@ cargo add teptris
 * `dump_json_natural(&Value)` (0.1.2) — the host JSON view: real
   numbers, booleans, RFC 3339 datetime strings, non-finite floats as
   null. Straight into any JSON parser; the engine's fastest emit.
+* **serde** (0.1.6, default feature) — `from_str::<Config>(s)` and
+  `to_string(&config)`: parse straight into your structs and back,
+  skipping the intermediate `Value` tree. `Value`, `Table` and
+  `Datetime` implement `Serialize`/`Deserialize`; datetimes follow
+  the `toml` crate's interchange convention (the
+  `$__toml_private_datetime` map in foreign formats, a real TOML
+  datetime on TOML output). TOML has no null — `None` is a
+  serialization error, so skip the field instead.
 * `Document` — parse / `to_toml_string` / `to_json_string` (toml-test
   conformance dialect) / `to_json_natural_string` / `to_value`.
 * `Descriptor::build(&[PlanRow])` + `walk(&Document)` — compile a plan
