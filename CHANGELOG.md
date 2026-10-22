@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Serde support - from_str/to_string into your structs, Value/Table/Datetime derive-compatible (B2)
+
+
+### Other
+
+- Ci badge (X4)
+
+- Cargo fmt on the extended tier
+
+- The roundtrip cell vs the toml crate + toml_edit
+
+- Checked-in TOML corpus stays LF (windows autocrlf would shift multiline strings in the differential)
+
+- The corpus stays LF (windows autocrlf would shift multiline strings)
+
+- Cargo fmt
+
+- Binding-level differential vs the toml crate (B5)
+
+- The mission - CLAUDE.md + README banner (BEST-EVER bar)
+
+
 ### Fixed
 
 - CI builds against engine tag v0.3.4 — `teptris_plan_build` no longer
