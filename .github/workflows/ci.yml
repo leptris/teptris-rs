@@ -60,6 +60,7 @@ jobs:
         run: |
           python3 engine/scripts/gen_bench_corpus.py corpus
           cargo bench --bench tier -- corpus 20
+          cargo bench --bench serde_tier
       - name: cargo fmt
         if: matrix.os == 'ubuntu-latest'
         run: cargo fmt --all --check
