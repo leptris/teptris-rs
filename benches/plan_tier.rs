@@ -153,7 +153,10 @@ fn main() {
         let secs = t.get("section").unwrap().as_array().unwrap();
         assert_eq!(secs.len(), 2000);
         assert_eq!(secs[0].as_table().unwrap().len(), 8);
-        assert_eq!(secs[0].as_table().unwrap().get("name").unwrap().as_str(), Some("section-0"));
+        assert_eq!(
+            secs[0].as_table().unwrap().get("name").unwrap().as_str(),
+            Some("section-0")
+        );
     }
 
     let plan_full_ms = bench("engine  parse + plan walk (full schema)", 20, || {
@@ -193,7 +196,10 @@ fn main() {
         ("plan partial (2/8)", plan_part_ms),
         ("serde derive", derive_ms),
     ] {
-        println!("  {label:<20} {derive_ms:>8.2} / {ms:>8.2} = {:>5.2}x", derive_ms / ms);
+        println!(
+            "  {label:<20} {derive_ms:>8.2} / {ms:>8.2} = {:>5.2}x",
+            derive_ms / ms
+        );
     }
     println!("\nvs toml crate derive: {:.2}x", toml_ms / plan_full_ms);
 }
