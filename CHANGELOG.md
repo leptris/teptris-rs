@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The plan tier - plan-direct extraction vs the derive path
+
+
+### Other
+
+- The engine ref moves to v0.3.9 (inline-table pair separators)
+
+- The plan-fusion ceiling - derive minus Value is 11.6% (0.26 ms of 2.29)
+
+- The serde tier - derive-vs-derive vs the toml crate (B2's cell)
+
+
+### Added
+
 - Serde support - from_str/to_string into your structs, Value/Table/Datetime derive-compatible (B2)
 
 
