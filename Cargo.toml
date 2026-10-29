@@ -34,3 +34,8 @@ harness = false
 name = "serde_tier"
 harness = false
 required-features = ["serde"]
+
+[[bench]]
+name = "plan_tier"
+harness = false
+required-features = ["serde"]

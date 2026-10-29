@@ -101,6 +101,24 @@ fn roundtrip_datetimes_through_dump() {
 }
 
 #[test]
+fn roundtrip_multi_pair_inline_tables_through_dump() {
+    // the engine-writer regression class (leptris/teptris#150): a
+    // multi-pair inline table must carry its ", " separators. The rust
+    // dump path goes through the DOM emitter (never broken), but the
+    // contract is pinned here so the binding's output stays valid
+    // TOML against any future emit-path change.
+    let src = b"[[items]]\nm = {created = 2026-01-17, weight = 9.428}\nn = {x = 1, y = 2}\n";
+    let v = loads(src).unwrap();
+    let toml = dump(&v).unwrap();
+    assert!(
+        toml.contains("created = 2026-01-17") && toml.contains("weight = 9.428"),
+        "{toml}"
+    );
+    let v2 = loads(toml.as_bytes()).unwrap();
+    assert_eq!(v, v2, "parse(dump(v)) must equal v");
+}
+
+#[test]
 fn emit_json_is_conformance_shape() {
     let doc_toml = b"a = 1\n";
     let json = teptris::Document::parse(doc_toml)
