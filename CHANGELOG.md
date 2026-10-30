@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-10-30
+
+### Changed
+
+- The crate version now matches the engine version it is validated
+  against (owner ruling, 2026-10-30): teptris-rs 0.3.9 rides engine
+  v0.3.9. The old 0.1.x line is retired; every future crate release
+  carries the engine's number per the family all-runtimes law.
+
 ## [0.1.7] - 2026-10-29
 
 ### Added
