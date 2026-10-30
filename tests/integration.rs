@@ -101,6 +101,19 @@ fn roundtrip_datetimes_through_dump() {
 }
 
 #[test]
+fn roundtrip_empty_keys_through_dump() {
+    // quoted empty keys are legal TOML; the engine writer used to
+    // conflate an empty key with "no pending key" (engine v0.3.10
+    // fix). The rust surface goes through the builder DOM (never
+    // broken) - the contract is pinned here per binding.
+    let src = "'' = 1\nm = {'' = 2, b = 3}\n";
+    let v = loads(src.as_bytes()).unwrap();
+    let toml = dump(&v).unwrap();
+    assert!(toml.contains("'' = 1"), "{toml}");
+    assert_eq!(loads(toml.as_bytes()).unwrap(), v);
+}
+
+#[test]
 fn roundtrip_multi_pair_inline_tables_through_dump() {
     // the engine-writer regression class (leptris/teptris#150): a
     // multi-pair inline table must carry its ", " separators. The rust
