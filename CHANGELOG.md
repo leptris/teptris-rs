@@ -7,9 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.11] - 2026-10-30
+
 ### Fixed
 
-- Pin the rust toolchain + pin the empty-key writer contract
+- The rust toolchain is pinned (the fmt gate passed PR #41 and failed
+  main when stable floated between runs)
+- The empty-key writer contract is pinned at the rust surface (engine
+  v0.3.10 emits quoted empty keys; the rust builder path was never
+  broken)
+- This wave release rides engine v0.3.11 per the all-runtimes law
+  (v0.3.11 repairs the v0.3.10 array-marker regression in the op-stream
+  writer; the rust builder path was unaffected)
 
 
 ## [0.3.9] - 2026-10-30
