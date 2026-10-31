@@ -177,6 +177,15 @@ fn main() {
         std::hint::black_box(&v);
     });
 
+    bench("engine  parse + borrowed walk (headline reads)", 20, || {
+        let doc2 = teptris::Document::parse(bytes).unwrap();
+        let r = plan_full.walk_borrowed(&doc2).unwrap();
+        let t = r.table("meta").unwrap();
+        std::hint::black_box(t.get_str("title"));
+        std::hint::black_box(r.aot_len("section"));
+        std::hint::black_box(&r);
+    });
+
     let derive_ms = bench("engine  from_str::<Doc> (serde derive)", 20, || {
         let doc: Doc = teptris::from_str(&src).unwrap();
         std::hint::black_box(&doc);

@@ -102,6 +102,29 @@ impl Descriptor {
         Ok(Descriptor { plan })
     }
 
+    /// Borrowed walk: run the plan and hand back a [`PlanResult`]
+    /// facade that reads typed values straight out of the engine's
+    /// result view - no owned `Value` tree is materialized. The
+    /// measured use (plan tier): full-breadth extraction was 0.69x
+    /// serde derive because every value became an owned `Value`;
+    /// the borrowed path targets the parse floor.
+    pub fn walk_borrowed<'a>(&'a self, doc: &'a Document) -> Result<PlanResult<'a>, Error> {
+        unsafe {
+            let root = ffi::teptris_document_root(doc.ptr);
+            let mut status = ffi::TEPTRIS_OK;
+            let res = ffi::teptris_plan_walk(self.plan, root, &mut status);
+            check(status)?;
+            if res.is_null() {
+                return Err(Error(ffi::TEPTRIS_ERR_STATE));
+            }
+            Ok(PlanResult {
+                plan: self.plan,
+                res,
+                _doc: doc,
+            })
+        }
+    }
+
     /// Materialize the planned keys of `doc`'s root table.
     pub fn walk(&self, doc: &Document) -> Result<Value, Error> {
         unsafe {
@@ -397,5 +420,277 @@ unsafe fn asm_array_scalar_value(res: *const ffi::teptris_plan_result, i: u32, j
             })
         }
         _ => Value::Table(Table::default()),
+    }
+}
+
+/// A borrowed plan walk: typed getters over the engine's result view.
+/// Values are read straight out of the parse input (zero-copy views);
+/// nothing is materialized. Row lookup is by the plan's row NAME.
+pub struct PlanResult<'a> {
+    plan: *const ffi::teptris_plan,
+    res: *const ffi::teptris_plan_result,
+    _doc: &'a Document,
+}
+
+impl Drop for PlanResult<'_> {
+    fn drop(&mut self) {
+        unsafe { ffi::teptris_plan_result_free(self.res as *mut ffi::teptris_plan_result) }
+    }
+}
+
+/// The kind of a planned row's result.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BorrowedKind {
+    Missing,
+    Scalar,
+    Array,
+    Table,
+}
+
+impl PlanResult<'_> {
+    fn row_of(&self, name: &str) -> Option<(u32, u32)> {
+        unsafe {
+            let n = ffi::teptris_plan_row_count(self.plan, 0);
+            for i in 0..n {
+                let cName = ffi::teptris_plan_row_name_at(self.plan, 0, i);
+                let cname = std::ffi::CStr::from_ptr(cName);
+                if cname.to_bytes() == name.as_bytes() {
+                    return Some((i, ffi::teptris_plan_row_sub_at(self.plan, 0, i)));
+                }
+            }
+        }
+        None
+    }
+
+    /// The result kind of a planned row.
+    pub fn kind(&self, name: &str) -> BorrowedKind {
+        let Some((row, _)) = self.row_of(name) else {
+            return BorrowedKind::Missing;
+        };
+        match unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } {
+            1 => BorrowedKind::Scalar,
+            2 => BorrowedKind::Array,
+            3 => BorrowedKind::Table,
+            _ => BorrowedKind::Missing,
+        }
+    }
+
+    /// A planned scalar as a borrowed &str (zero-copy into the input).
+    pub fn get_str(&self, name: &str) -> Option<&'_ str> {
+        let (row, _) = self.row_of(name)?;
+        if unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } != 1 {
+            return None;
+        }
+        let mut view = ffi::teptris_view {
+            ptr: std::ptr::null(),
+            len: 0,
+        };
+        let ok = unsafe { ffi::teptris_plan_result_string_at(self.res, row, &mut view) };
+        if ok != ffi::TEPTRIS_OK {
+            return None;
+        }
+        let bytes = unsafe { std::slice::from_raw_parts(view.ptr as *const u8, view.len) };
+        Some(std::str::from_utf8(bytes).ok()?)
+    }
+
+    /// A planned scalar integer.
+    pub fn get_int(&self, name: &str) -> Option<i64> {
+        let (row, _) = self.row_of(name)?;
+        let mut v = 0i64;
+        let ok = unsafe { ffi::teptris_plan_result_integer_at(self.res, row, &mut v) };
+        (ok == ffi::TEPTRIS_OK).then_some(v)
+    }
+
+    /// A planned scalar float.
+    pub fn get_float(&self, name: &str) -> Option<f64> {
+        let (row, _) = self.row_of(name)?;
+        let mut v = 0f64;
+        let ok = unsafe { ffi::teptris_plan_result_float_at(self.res, row, &mut v) };
+        (ok == ffi::TEPTRIS_OK).then_some(v)
+    }
+
+    /// A planned scalar boolean.
+    pub fn get_bool(&self, name: &str) -> Option<bool> {
+        let (row, _) = self.row_of(name)?;
+        let mut v = false;
+        let ok = unsafe { ffi::teptris_plan_result_boolean_at(self.res, row, &mut v) };
+        (ok == ffi::TEPTRIS_OK).then_some(v)
+    }
+
+    /// A planned array-of-scalar length.
+    pub fn array_len(&self, name: &str) -> Option<u32> {
+        let (row, _) = self.row_of(name)?;
+        if unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } != 2 {
+            return None;
+        }
+        Some(unsafe { ffi::teptris_plan_result_array_len_at(self.res, row) })
+    }
+
+    /// One scalar element of a planned array.
+    pub fn array_int(&self, name: &str, i: u32) -> Option<i64> {
+        let (row, _) = self.row_of(name)?;
+        let mut v = 0i64;
+        let ok = unsafe { ffi::teptris_plan_result_array_integer_at(self.res, row, i, &mut v) };
+        (ok == ffi::TEPTRIS_OK).then_some(v)
+    }
+
+    /// A planned array-of-scalar element as &str.
+    pub fn array_str<'a>(&'a self, name: &str, i: u32) -> Option<&'a str> {
+        let (row, _) = self.row_of(name)?;
+        let mut view = ffi::teptris_view {
+            ptr: std::ptr::null(),
+            len: 0,
+        };
+        let ok = unsafe { ffi::teptris_plan_result_array_string_at(self.res, row, i, &mut view) };
+        if ok != ffi::TEPTRIS_OK {
+            return None;
+        }
+        let bytes = unsafe { std::slice::from_raw_parts(view.ptr as *const u8, view.len) };
+        std::str::from_utf8(bytes).ok()
+    }
+
+    /// Enter a planned nested table row (a sub-result). The returned
+    /// facade borrows this result's storage.
+    pub fn table(&self, name: &str) -> Option<PlanTable<'_, '_>> {
+        let (row, sub) = self.row_of(name)?;
+        if unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } != 3 {
+            return None;
+        }
+        let sub_res = unsafe { ffi::teptris_plan_result_row_view(self.res, row) };
+        if sub_res.is_null() {
+            return None;
+        }
+        Some(PlanTable {
+            owner: self,
+            res: sub_res as *const ffi::teptris_plan_result,
+            sub,
+            dropped: false,
+        })
+    }
+
+    /// The element count of a planned array-of-tables row.
+    pub fn aot_len(&self, name: &str) -> Option<u32> {
+        let (row, sub) = self.row_of(name)?;
+        if unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } != 2 {
+            return None;
+        }
+        let _ = sub;
+        Some(unsafe { ffi::teptris_plan_result_array_len_at(self.res, row) })
+    }
+
+    /// One element of a planned array-of-tables as an owned Value
+    /// (elements are visited once; the borrowed read stays for the
+    /// scalars path).
+    pub fn aot_entry(&self, name: &str, i: u32) -> Option<Value> {
+        let (row, sub) = self.row_of(name)?;
+        if unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } != 2 {
+            return None;
+        }
+        unsafe {
+            if ffi::teptris_plan_result_array_kind_at(self.res, row, i) != 3 {
+                return None;
+            }
+            let entry = ffi::teptris_plan_result_array_entry_at(self.res, row, i);
+            if entry.is_null() {
+                return None;
+            }
+            let out = asm(self.plan, entry, sub);
+            ffi::teptris_plan_result_view_free(entry);
+            Some(Value::Table(out))
+        }
+    }
+}
+
+/// A entered nested-table sub-result: the same typed getters, offset
+/// into the sub-plan.
+pub struct PlanTable<'a, 'b> {
+    owner: &'a PlanResult<'b>,
+    res: *const ffi::teptris_plan_result,
+    sub: u32,
+    dropped: bool,
+}
+
+impl Drop for PlanTable<'_, '_> {
+    fn drop(&mut self) {
+        if !self.dropped {
+            unsafe { ffi::teptris_plan_result_view_free(self.res as *mut ffi::teptris_plan_result) }
+            self.dropped = true;
+        }
+    }
+}
+
+impl PlanTable<'_, '_> {
+    fn row_of(&self, name: &str) -> Option<u32> {
+        unsafe {
+            let n = ffi::teptris_plan_row_count(self.owner.plan, self.sub);
+            for i in 0..n {
+                let cName = ffi::teptris_plan_row_name_at(self.owner.plan, self.sub, i);
+                let cname = std::ffi::CStr::from_ptr(cName);
+                if cname.to_bytes() == name.as_bytes() {
+                    return Some(i);
+                }
+            }
+        }
+        None
+    }
+
+    pub fn get_str(&self, name: &str) -> Option<&'_ str> {
+        let row = self.row_of(name)?;
+        if unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } != 1 {
+            return None;
+        }
+        let mut view = ffi::teptris_view {
+            ptr: std::ptr::null(),
+            len: 0,
+        };
+        let ok = unsafe { ffi::teptris_plan_result_string_at(self.res, row, &mut view) };
+        if ok != ffi::TEPTRIS_OK {
+            return None;
+        }
+        let bytes = unsafe { std::slice::from_raw_parts(view.ptr as *const u8, view.len) };
+        std::str::from_utf8(bytes).ok()
+    }
+
+    pub fn get_int(&self, name: &str) -> Option<i64> {
+        let row = self.row_of(name)?;
+        let mut v = 0i64;
+        let ok = unsafe { ffi::teptris_plan_result_integer_at(self.res, row, &mut v) };
+        (ok == ffi::TEPTRIS_OK).then_some(v)
+    }
+
+    pub fn get_float(&self, name: &str) -> Option<f64> {
+        let row = self.row_of(name)?;
+        let mut v = 0f64;
+        let ok = unsafe { ffi::teptris_plan_result_float_at(self.res, row, &mut v) };
+        (ok == ffi::TEPTRIS_OK).then_some(v)
+    }
+
+    pub fn get_bool(&self, name: &str) -> Option<bool> {
+        let row = self.row_of(name)?;
+        let mut v = false;
+        let ok = unsafe { ffi::teptris_plan_result_boolean_at(self.res, row, &mut v) };
+        (ok == ffi::TEPTRIS_OK).then_some(v)
+    }
+
+    pub fn array_len(&self, name: &str) -> Option<u32> {
+        let row = self.row_of(name)?;
+        if unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } != 2 {
+            return None;
+        }
+        Some(unsafe { ffi::teptris_plan_result_array_len_at(self.res, row) })
+    }
+
+    pub fn array_str<'a>(&'a self, name: &str, i: u32) -> Option<&'a str> {
+        let row = self.row_of(name)?;
+        let mut view = ffi::teptris_view {
+            ptr: std::ptr::null(),
+            len: 0,
+        };
+        let ok = unsafe { ffi::teptris_plan_result_array_string_at(self.res, row, i, &mut view) };
+        if ok != ffi::TEPTRIS_OK {
+            return None;
+        }
+        let bytes = unsafe { std::slice::from_raw_parts(view.ptr as *const u8, view.len) };
+        std::str::from_utf8(bytes).ok()
     }
 }
