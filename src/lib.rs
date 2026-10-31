@@ -204,7 +204,7 @@ impl fmt::Display for Datetime {
         }
     }
 }
-pub use plan::{Descriptor, PlanRow, PlanRowKind};
+pub use plan::{BorrowedKind, Descriptor, PlanResult, PlanRow, PlanRowKind, PlanTable};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Error(pub i32);
