@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.14] - 2026-10-31
+
+### Changed
+
+- The engine pin rides v0.3.14 (the format-preserving edit + the edit fuzz lane)
+
 ### Added
 
 - The borrowed walk - PlanResult typed getters over the engine result view
