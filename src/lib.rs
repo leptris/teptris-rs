@@ -450,6 +450,50 @@ pub fn loads(input: &[u8]) -> Result<Value, ParseError> {
     Document::parse(input).map(|d| d.as_value())
 }
 
+/// Format-preserving edit: rewrite exactly the value bytes of one
+/// key = value line; every other byte of the source survives
+/// (comments, blank lines, formatting, CRLF endings). `keypath` may
+/// carry a `[table]` prefix ("t.x" edits x inside [t]); `replacement`
+/// is the value's TEXT, validated by the engine by parsing
+/// "k = <replacement>". Multiline strings and inline collections
+/// splice too (parse-verified); an absent key is
+/// [`Error`](`TEPTRIS_ERR_STATE`), a malformed span or replacement is
+/// `TEPTRIS_ERR_ARG`. Interior NULs in `keypath`/`replacement` are
+/// rejected (the engine strlen's them).
+pub fn edit_scalar(src: &str, keypath: &str, replacement: &str) -> Result<String, Error> {
+    let ckey = match CString::new(keypath) {
+        Ok(k) => k,
+        Err(_) => return Err(Error(ffi::TEPTRIS_ERR_ARG)),
+    };
+    let crep = match CString::new(replacement) {
+        Ok(r) => r,
+        Err(_) => return Err(Error(ffi::TEPTRIS_ERR_ARG)),
+    };
+    let mut buf: *mut c_char = std::ptr::null_mut();
+    let mut out_len: usize = 0;
+    let st = unsafe {
+        ffi::teptris_edit_scalar(
+            src.as_ptr() as *const c_char,
+            src.len(),
+            ckey.as_ptr(),
+            crep.as_ptr(),
+            &mut buf,
+            &mut out_len,
+        )
+    };
+    check(st)?;
+    let out = unsafe { std::slice::from_raw_parts(buf as *const u8, out_len) };
+    let owned = match std::str::from_utf8(out) {
+        Ok(s) => s.to_owned(),
+        Err(_) => {
+            unsafe { libc_free(buf as *mut std::os::raw::c_void) };
+            return Err(Error(ffi::TEPTRIS_ERR_ENCODING));
+        }
+    };
+    unsafe { libc_free(buf as *mut std::os::raw::c_void) };
+    Ok(owned)
+}
+
 /// Emit a [`Value`] as canonical TOML via the engine's builder — the
 /// emitter stays the single source of formatting truth.
 pub fn dump(v: &Value) -> Result<String, Error> {

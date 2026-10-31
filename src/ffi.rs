@@ -270,6 +270,15 @@ extern "C" {
     ) -> TeptrisStatus;
     pub fn teptris_flatten_free(buf: *mut c_void);
 
+    pub fn teptris_edit_scalar(
+        src: *const c_char,
+        len: usize,
+        keypath: *const c_char,
+        replacement: *const c_char,
+        buf: *mut *mut c_char,
+        out_len: *mut usize,
+    ) -> TeptrisStatus;
+
     pub fn teptris_status_string(status: TeptrisStatus) -> *const c_char;
     pub fn teptris_version_string() -> *const c_char;
 
