@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.15] - 2026-10-31
+
+### Fixed
+
+- The engine pin rides v0.3.15 (HH:MM at true EOF overread one byte - the nightly fuzz find)
+
 ## [0.3.14] - 2026-10-31
 
 ### Changed
