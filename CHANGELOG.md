@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.12] - 2026-10-31
+
+### Changed
+
+- This wave release rides engine v0.3.12 per the all-runtimes law
+  (CRLF multi-line normalization + the dotted-key depth ceiling - the
+  rust surface's own code is unchanged; the crate links the engine
+  from source, so consumers pick the fixes up when they rebuild)
+
 ## [0.3.11] - 2026-10-30
 
 ### Fixed
