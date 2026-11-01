@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.17] - 2026-11-01
+
+### Added
+
+- borrowed AoT entry accessors - aot_table + nested table/aot reads reach full-schema parity with owned (the bench cell reads every element name zero-copy: 1.76 ms vs 2.17 ms serde derive on the shared corpus, host-local)
+
+### Fixed
+
+- the engine pin rides v0.3.17 (edit v3: dotted key lines continuing the open section)
+
 ## [0.3.16] - 2026-10-31
 
 ### Added
