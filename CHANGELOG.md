@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.18] - 2026-11-01
+
+### Changed
+
+- The engine pin rides v0.3.18 (the ledger meets the shipped surface; the CLI error text meets v3). README documents edit_scalar + walk_borrowed.
+
 ## [0.3.17] - 2026-11-01
 
 ### Added
