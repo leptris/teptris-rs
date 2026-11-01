@@ -75,3 +75,46 @@ fn borrowed_matches_owned_walk() {
         owned.as_table().unwrap().get("count").unwrap().as_integer()
     );
 }
+
+#[test]
+fn borrowed_aot_tables_read_zero_copy() {
+    let doc = teptris::Document::parse(
+        b"[[items]]\nname = \"one\"\nweight = 1\n[[items]]\nname = \"two\"\nweight = 2\n",
+    )
+    .unwrap();
+    let d = plan();
+    let r = d.walk_borrowed(&doc).unwrap();
+    let e0 = r.aot_table("items", 0).unwrap();
+    assert_eq!(e0.get_str("name"), Some("one"));
+    assert_eq!(e0.get_int("weight"), Some(1));
+    let e1 = r.aot_table("items", 1).unwrap();
+    assert_eq!(e1.get_str("name"), Some("two"));
+    assert_eq!(e1.get_int("weight"), Some(2));
+    // out-of-range and type mismatches are None, never a panic
+    assert!(r.aot_table("items", 2).is_none());
+    assert!(r.aot_table("meta", 0).is_none());
+}
+
+#[test]
+fn borrowed_nested_chain_reaches_everywhere_owned_goes() {
+    let doc = teptris::Document::parse(
+        b"[meta]\nauthor = \"ron\"\n[meta.build]\nflags = \"release\"\n[[meta.checks]]\nname = \"fmt\"\n",
+    )
+    .unwrap();
+    let d = Descriptor::build(&[PlanRow::nested(
+        "meta",
+        vec![
+            PlanRow::scalar("author"),
+            PlanRow::nested("build", vec![PlanRow::scalar("flags")]),
+            PlanRow::nested("checks", vec![PlanRow::scalar("name")]),
+        ],
+    )])
+    .unwrap();
+    let r = d.walk_borrowed(&doc).unwrap();
+    let meta = r.table("meta").unwrap();
+    assert_eq!(meta.get_str("author"), Some("ron"));
+    let build = meta.table("build").unwrap();
+    assert_eq!(build.get_str("flags"), Some("release"));
+    let checks = meta.aot_table("checks", 0).unwrap();
+    assert_eq!(checks.get_str("name"), Some("fmt"));
+}
