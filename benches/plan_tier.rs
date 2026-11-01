@@ -186,6 +186,24 @@ fn main() {
         std::hint::black_box(&r);
     });
 
+    // borrowed AoT entries: the element scalars read zero-copy (the
+    // owned aot_entry materializes; this is the parity cell)
+    bench(
+        "engine  parse + borrowed walk + borrowed AoT entries",
+        20,
+        || {
+            let doc3 = teptris::Document::parse(bytes).unwrap();
+            let r = plan_full.walk_borrowed(&doc3).unwrap();
+            let n = r.aot_len("section").unwrap_or(0);
+            for i in 0..n {
+                if let Some(e) = r.aot_table("section", i) {
+                    std::hint::black_box(e.get_str("name"));
+                }
+            }
+            std::hint::black_box(&r);
+        },
+    );
+
     let derive_ms = bench("engine  from_str::<Doc> (serde derive)", 20, || {
         let doc: Doc = teptris::from_str(&src).unwrap();
         std::hint::black_box(&doc);

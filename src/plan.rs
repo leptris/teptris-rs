@@ -578,6 +578,31 @@ impl PlanResult<'_> {
         Some(unsafe { ffi::teptris_plan_result_array_len_at(self.res, row) })
     }
 
+    /// Enter element i of a planned array-of-tables as a borrowed
+    /// sub-result - the same typed getters as [`PlanResult::table`],
+    /// zero materialization. `aot_entry` stays for owned reads.
+    pub fn aot_table(&self, name: &str, i: u32) -> Option<PlanTable<'_, '_>> {
+        let (row, sub) = self.row_of(name)?;
+        if unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } != 2 {
+            return None;
+        }
+        unsafe {
+            if ffi::teptris_plan_result_array_kind_at(self.res, row, i) != 3 {
+                return None;
+            }
+            let entry = ffi::teptris_plan_result_array_entry_at(self.res, row, i);
+            if entry.is_null() {
+                return None;
+            }
+            Some(PlanTable {
+                owner: self,
+                res: entry as *const ffi::teptris_plan_result,
+                sub,
+                dropped: false,
+            })
+        }
+    }
+
     /// One element of a planned array-of-tables as an owned Value
     /// (elements are visited once; the borrowed read stays for the
     /// scalars path).
@@ -632,6 +657,75 @@ impl PlanTable<'_, '_> {
             }
         }
         None
+    }
+
+    /// Enter a nested planned table (a deeper sub-result).
+    pub fn table(&self, name: &str) -> Option<PlanTable<'_, '_>> {
+        let row = self.row_of(name)?;
+        if unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } != 3 {
+            return None;
+        }
+        let sub_res = unsafe { ffi::teptris_plan_result_row_view(self.res, row) };
+        if sub_res.is_null() {
+            return None;
+        }
+        // the sub-plan id of the nested row: the parent's sub indexes
+        // plan rows; the nested row's own plan id comes from the plan
+        // tree, so look it up there
+        let sub = self.nested_sub(row)?;
+        Some(PlanTable {
+            owner: self.owner,
+            res: sub_res as *const ffi::teptris_plan_result,
+            sub,
+            dropped: false,
+        })
+    }
+
+    /// Element count of a planned array-of-tables row.
+    pub fn aot_len(&self, name: &str) -> Option<u32> {
+        let row = self.row_of(name)?;
+        if unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } != 2 {
+            return None;
+        }
+        Some(unsafe { ffi::teptris_plan_result_array_len_at(self.res, row) })
+    }
+
+    /// Enter element i of a planned array-of-tables as a borrowed
+    /// sub-result.
+    pub fn aot_table(&self, name: &str, i: u32) -> Option<PlanTable<'_, '_>> {
+        let row = self.row_of(name)?;
+        if unsafe { ffi::teptris_plan_result_kind_at(self.res, row) } != 2 {
+            return None;
+        }
+        unsafe {
+            if ffi::teptris_plan_result_array_kind_at(self.res, row, i) != 3 {
+                return None;
+            }
+            let entry = ffi::teptris_plan_result_array_entry_at(self.res, row, i);
+            if entry.is_null() {
+                return None;
+            }
+            let sub = self.nested_sub(row)?;
+            Some(PlanTable {
+                owner: self.owner,
+                res: entry as *const ffi::teptris_plan_result,
+                sub,
+                dropped: false,
+            })
+        }
+    }
+
+    /// The plan-tree id of a nested row: walk the parent's sub-plan
+    /// rows in the plan to find this row's nested plan id.
+    fn nested_sub(&self, row: u32) -> Option<u32> {
+        unsafe {
+            let n = ffi::teptris_plan_row_count(self.owner.plan, self.sub);
+            if row >= n {
+                return None;
+            }
+            let sub = ffi::teptris_plan_row_sub_at(self.owner.plan, self.sub, row);
+            (sub != u32::MAX).then_some(sub)
+        }
     }
 
     pub fn get_str(&self, name: &str) -> Option<&'_ str> {
