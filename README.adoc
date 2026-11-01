@@ -61,6 +61,19 @@ cargo add teptris
   serialization error, so skip the field instead.
 * `Document` — parse / `to_toml_string` / `to_json_string` (toml-test
   conformance dialect) / `to_json_natural_string` / `to_value`.
+* `edit_scalar(&str, &str, &str) -> Result<String, Error>` (0.3.16) —
+  the format-preserving edit: rewrites exactly the value bytes of one
+  `key = value` line; comments, blank lines, formatting and CRLF
+  endings survive. Dotted paths address the key (a `[table]` prefix
+  matches the open section; a dotted key line may continue the
+  section); multiline strings and inline collections splice with
+  parse-verified spans; the replacement is the value's TEXT, validated
+  by the engine. Absent key → `ERR_STATE`; malformed span/replacement
+  → `ERR_ARG`.
+* `walk_borrowed(&Document)` (0.3.13+) — the zero-materialization
+  Descriptor read: `PlanResult`/`PlanTable` typed getters over the
+  engine result view, including `aot_table(name, i)` for borrowed
+  array-of-tables entries (full-schema parity with the owned walk).
 * `Descriptor::build(&[PlanRow])` + `walk(&Document)` — compile a plan
   once, materialize only the planned keys in ONE native pass
   (`PlanRow::scalar/collection/raw/nested`); unplanned keys are never
