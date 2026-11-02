@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.20] - 2026-11-02
+
+### Added
+
+- `schema::Schema` — JSON Schema 2020-12 practical subset validation
+  (compile-once/validate-many), typed `Violation`s
+  (`path`/`schema_path`/`message`), `validate_doc` reuse of a parsed
+  `Document`, and compile-time rejection of unsupported constructs
+  (`SchemaCompileError::diag`). The engine pin rides v0.3.20
+  ([SCHEMAS.md](https://github.com/leptris/teptris/blob/main/SCHEMAS.md)).
+
 ## [0.3.19] - 2026-11-02
 
 ### Changed

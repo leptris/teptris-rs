@@ -26,6 +26,16 @@ use std::ffi::{CStr, CString};
 use std::fmt;
 use std::os::raw::c_char;
 
+/// Parse/validation status codes (the stable ABI's `teptris_status`).
+pub const TEPTRIS_OK: i32 = 0;
+pub const TEPTRIS_ERR_ALLOC: i32 = 1;
+pub const TEPTRIS_ERR_SYNTAX: i32 = 2;
+pub const TEPTRIS_ERR_SEMANTIC: i32 = 3;
+pub const TEPTRIS_ERR_ENCODING: i32 = 4;
+pub const TEPTRIS_ERR_DEPTH: i32 = 5;
+pub const TEPTRIS_ERR_ARG: i32 = 6;
+pub const TEPTRIS_ERR_STATE: i32 = 7;
+
 /// A TOML value in document order. Tables keep insertion order (the
 /// TOML semantic); use [`Table::get`] for lookup.
 #[derive(Debug, Clone, PartialEq)]
@@ -159,6 +169,7 @@ impl std::error::Error for ParseError {}
 
 /// A non-parse binding failure (allocation, bad argument, state).
 pub mod plan;
+pub mod schema;
 #[cfg(feature = "serde")]
 pub mod serde;
 // the toml-crate convention: the entry points sit at the crate root
@@ -254,6 +265,12 @@ pub struct Document {
 unsafe impl Send for Document {}
 
 impl Document {
+    /// The raw handle for engine entrypoints that take a document
+    /// (crate-visible; the schema validator walks it directly).
+    pub(crate) fn as_raw_ptr(&self) -> *mut ffi::teptris_document {
+        self.ptr
+    }
+
     /// Parse a TOML document. The input is copied into the document.
     pub fn parse(input: &[u8]) -> Result<Document, ParseError> {
         Self::parse_buf(input.to_vec())
