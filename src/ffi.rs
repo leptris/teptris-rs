@@ -337,3 +337,34 @@ extern "C" {
         out: *mut *mut teptris_document,
     ) -> TeptrisStatus;
 }
+
+/* --- schema validation (teptris/schema.h, engine 0.3.20) --- */
+
+pub struct teptris_schema {
+    _unused: [u8; 0],
+}
+
+extern "C" {
+    pub fn teptris_schema_compile(
+        json: *const c_char,
+        len: usize,
+        out: *mut *mut teptris_schema,
+        diag_buf: *mut *mut c_char,
+        diag_len: *mut usize,
+    ) -> TeptrisStatus;
+    pub fn teptris_diag_free(buf: *mut c_char);
+    pub fn teptris_schema_validate(
+        sch: *const teptris_schema,
+        toml: *const c_char,
+        len: usize,
+        buf: *mut *mut c_char,
+        out_len: *mut usize,
+    ) -> TeptrisStatus;
+    pub fn teptris_schema_validate_doc(
+        sch: *const teptris_schema,
+        doc: *const teptris_document,
+        buf: *mut *mut c_char,
+        out_len: *mut usize,
+    ) -> TeptrisStatus;
+    pub fn teptris_schema_free(sch: *mut teptris_schema);
+}
