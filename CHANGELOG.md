@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.19] - 2026-11-02
+
+### Changed
+
+- The engine pin rides v0.3.19 (audit 14: the contracts documented - the edit error contract, the borrowed-read contract, the truthfulness row at reality).
+
 ## [0.3.18] - 2026-11-01
 
 ### Changed
