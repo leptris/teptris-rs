@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.21] - 2026-11-03
+
+### Added
+- the taplo parity surface rides engine v0.3.21: draft-07
+  `dependencies` (both forms), `additionalItems`, tuple `items`,
+  `contentEncoding`/`contentMediaType`, the 21-name enforced format
+  set (including taplo's `semver`/`semver-requirement`), exact-decimal
+  `multipleOf`, and `Z`/`+00:00` datetime const spellings
+- a regression test asserting the new surface through the binding
+
 ## [0.3.20] - 2026-11-02
 
 ### Added

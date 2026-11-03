@@ -126,3 +126,46 @@ fn handle_is_send_and_drops_cleanly() {
         h.join().unwrap();
     }
 }
+
+#[test]
+fn the_taplo_parity_surface_rides_engine_v0_3_21() {
+    // draft-07 dependencies: the array form is a dependentRequired pair
+    let deps = Schema::compile(
+        r#"{"dependencies":{"credit_card":["billing_address"]}}"#,
+    )
+    .unwrap();
+    assert_eq!(deps.validate(b"a = 1\ncredit_card = 1\n").unwrap().len(), 1);
+    assert!(deps
+        .validate(b"credit_card = 1\nbilling_address = 'x'\n")
+        .unwrap()
+        .is_empty());
+
+    // tuple items + additionalItems:false
+    let tuple = Schema::compile(
+        r#"{"properties":{"t":{"items":[{"type":"string"}],"additionalItems":false}}}"#,
+    )
+    .unwrap();
+    assert!(tuple.validate(b"t = ['x']\n").unwrap().is_empty());
+    assert_eq!(tuple.validate(b"t = ['x', 1]\n").unwrap().len(), 1);
+
+    // exact-decimal multipleOf: 0.3 is a multiple of 0.1
+    let mult = Schema::compile(r#"{"properties":{"k":{"multipleOf":0.1}}}"#).unwrap();
+    assert!(mult.validate(b"k = 0.3\n").unwrap().is_empty());
+    assert_eq!(mult.validate(b"k = 0.35\n").unwrap().len(), 1);
+
+    // the enforced format set: semver-requirement rides taplo's own
+    // custom formats, uuid is unreachable in taplo's build
+    let req = Schema::compile(
+        r#"{"properties":{"k":{"format":"semver-requirement"}}}"#,
+    )
+    .unwrap();
+    assert!(req.validate(b"k = '^1.2'\n").unwrap().is_empty());
+    assert_eq!(req.validate(b"k = 'not a req'\n").unwrap().len(), 1);
+
+    let uuid = Schema::compile(r#"{"properties":{"k":{"format":"uuid"}}}"#).unwrap();
+    assert!(uuid
+        .validate(b"k = '123e4567-e89b-12d3-a456-426614174000'\n")
+        .unwrap()
+        .is_empty());
+    assert_eq!(uuid.validate(b"k = 'nope'\n").unwrap().len(), 1);
+}
