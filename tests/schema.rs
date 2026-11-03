@@ -130,10 +130,7 @@ fn handle_is_send_and_drops_cleanly() {
 #[test]
 fn the_taplo_parity_surface_rides_engine_v0_3_21() {
     // draft-07 dependencies: the array form is a dependentRequired pair
-    let deps = Schema::compile(
-        r#"{"dependencies":{"credit_card":["billing_address"]}}"#,
-    )
-    .unwrap();
+    let deps = Schema::compile(r#"{"dependencies":{"credit_card":["billing_address"]}}"#).unwrap();
     assert_eq!(deps.validate(b"a = 1\ncredit_card = 1\n").unwrap().len(), 1);
     assert!(deps
         .validate(b"credit_card = 1\nbilling_address = 'x'\n")
@@ -155,10 +152,7 @@ fn the_taplo_parity_surface_rides_engine_v0_3_21() {
 
     // the enforced format set: semver-requirement rides taplo's own
     // custom formats, uuid is unreachable in taplo's build
-    let req = Schema::compile(
-        r#"{"properties":{"k":{"format":"semver-requirement"}}}"#,
-    )
-    .unwrap();
+    let req = Schema::compile(r#"{"properties":{"k":{"format":"semver-requirement"}}}"#).unwrap();
     assert!(req.validate(b"k = '^1.2'\n").unwrap().is_empty());
     assert_eq!(req.validate(b"k = 'not a req'\n").unwrap().len(), 1);
 
