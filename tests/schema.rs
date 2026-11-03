@@ -224,3 +224,38 @@ fn the_sota_surface_rides_engine_v0_3_22() {
     assert!(local.validate(b"k = 07:32:00\n").unwrap().is_empty());
     assert_eq!(local.validate(b"k = '07:32:00Z'\n").unwrap().len(), 1);
 }
+
+#[test]
+fn builtin_metaschemas_resolve_in_memory() {
+    // The vendored metaschemas ship as built-in resources since
+    // engine 0.3.23: metaschema refs never touch the network.
+    let schema =
+        Schema::compile(r#"{"$ref":"https://json-schema.org/draft/2020-12/schema"}"#).unwrap();
+    assert!(schema
+        .validate(
+            br#"type = "string"
+"#
+        )
+        .unwrap()
+        .is_empty());
+    assert_eq!(
+        schema
+            .validate(
+                br#"type = 123
+"#
+            )
+            .unwrap()
+            .len(),
+        1
+    );
+
+    // the legacy draft-07 URL with the empty-fragment form
+    let d7 = Schema::compile(r#"{"$ref":"http://json-schema.org/draft-07/schema#"}"#).unwrap();
+    assert!(d7
+        .validate(
+            br#"description = "d"
+"#
+        )
+        .unwrap()
+        .is_empty());
+}
