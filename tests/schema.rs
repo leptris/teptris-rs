@@ -72,10 +72,12 @@ fn unknown_keywords_are_extensions() {
 
 #[test]
 fn policies_hold_from_rust() {
-    // policy 2: a float never validates as integer; enum is type-strict
+    // policy 2: enum equality is 2020-12 numeric identity since engine
+    // 0.3.23 (enum [1] matches 1.0, still rejects 1.5)
     let schema = Schema::compile(r#"{"properties":{"k":{"enum":[1]}}}"#).unwrap();
     assert!(schema.is_valid("k = 1\n"));
-    assert!(!schema.is_valid("k = 1.0\n"));
+    assert!(schema.is_valid("k = 1.0\n"));
+    assert!(!schema.is_valid("k = 1.5\n"));
 
     // policy 3: datetimes are strings with formats
     let schema =
