@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.22] - 2026-11-03
+
+### Added
+- the 2026 SOTA surface rides engine v0.3.22:
+  unevaluatedProperties/unevaluatedItems with full annotation
+  semantics, \$dynamicRef/\$recursiveRef, contentSchema, and the
+  date-time-local/time-local formats
+- a regression test asserting the new surface through the binding
+
 ## [0.3.21] - 2026-11-03
 
 ### Added

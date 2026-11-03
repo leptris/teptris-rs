@@ -41,12 +41,18 @@ fn compiles_and_validates() {
 
 #[test]
 fn rejects_unsupported_constructs_at_compile() {
-    let err: SchemaCompileError =
-        Schema::compile(r#"{"unevaluatedProperties":false}"#).unwrap_err();
-    assert!(err.diag.contains("unsupported"), "{}", err.diag);
+    // unevaluatedProperties is enforced since engine 0.3.22; the
+    // out-of-subset constructs still name themselves at compile
+    let enforced = Schema::compile(r#"{"unevaluatedProperties":false}"#).unwrap();
+    assert_eq!(enforced.validate(b"a = 1\n").unwrap().len(), 1);
 
-    let err = Schema::compile(r#"{"$ref":"https://x.example/s.json"}"#).unwrap_err();
+    let err: SchemaCompileError =
+        Schema::compile(r#"{"$ref":"https://x.example/s.json"}"#).unwrap_err();
     assert!(err.diag.contains("remote"), "{}", err.diag);
+
+    let err = Schema::compile(r#"{"$id":"https://example.com/a","allOf":[{"$ref":"other"}]}"#)
+        .unwrap_err();
+    assert!(err.diag.contains("remote") || err.diag.contains("unresolvable"), "{}", err.diag);
 
     let err = Schema::compile(r#"{"type":}"#).unwrap_err();
     assert!(err.diag.contains("error"), "{}", err.diag);
@@ -162,4 +168,58 @@ fn the_taplo_parity_surface_rides_engine_v0_3_21() {
         .unwrap()
         .is_empty());
     assert_eq!(uuid.validate(b"k = 'nope'\n").unwrap().len(), 1);
+}
+
+#[test]
+fn the_sota_surface_rides_engine_v0_3_22() {
+    // unevaluatedProperties with the cousin rule
+    let cousin = Schema::compile(
+        r#"{"allOf":[{"properties":{"a":{}}},{"unevaluatedProperties":false}]}"#,
+    )
+    .unwrap();
+    assert_eq!(cousin.validate(b"a = 1\n").unwrap().len(), 1);
+
+    // the same-object adjacency DOES hold
+    let nested = Schema::compile(
+        r#"{"properties":{"a":{}},"unevaluatedProperties":false}"#,
+    )
+    .unwrap();
+    assert!(nested.validate(b"a = 1\n").unwrap().is_empty());
+    assert_eq!(nested.validate(b"a = 1\nb = 2\n").unwrap().len(), 1);
+
+    // $dynamicRef: the innermost anchor wins
+    let tree = Schema::compile(
+        r##"{"$dynamicAnchor":"node","type":"object","properties":{
+            "value":{"type":"integer"},
+            "children":{"type":"array","items":{"$dynamicRef":"#node"}}}}"##,
+    )
+    .unwrap();
+    assert!(tree
+        .validate(b"value = 1\n[[children]]\nvalue = 2\n")
+        .unwrap()
+        .is_empty());
+    assert_eq!(
+        tree.validate(b"value = 1\n[[children]]\nvalue = 'x'\n")
+            .unwrap()
+            .len(),
+        1
+    );
+
+    // contentSchema asserts the decoded content
+    let content = Schema::compile(
+        r#"{"properties":{"k":{"contentEncoding":"base64",
+            "contentMediaType":"application/json",
+            "contentSchema":{"type":"object","required":["n"]}}}}"#,
+    )
+    .unwrap();
+    assert!(content.validate(b"k = 'eyJuIjogMX0='\n").unwrap().is_empty());
+    assert_eq!(content.validate(b"k = 'W10='\n").unwrap().len(), 1);
+
+    // tombi's TOML-native local formats
+    let local = Schema::compile(
+        r#"{"properties":{"k":{"format":"time-local"}}}"#,
+    )
+    .unwrap();
+    assert!(local.validate(b"k = 07:32:00\n").unwrap().is_empty());
+    assert_eq!(local.validate(b"k = '07:32:00Z'\n").unwrap().len(), 1);
 }
