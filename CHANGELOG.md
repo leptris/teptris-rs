@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The built-in metaschemas ride engine v0.3.23
+
+
+### Fixed
+
+- The policy-2 enum assertions follow the 2020-12 numeric identity
+
+
 ## [0.3.22] - 2026-11-03
 
 ### Added
