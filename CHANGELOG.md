@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The Unicode property escapes ride engine v0.3.24
+
+
+### Other
+
+- Release v0.3.23
+
+
+### Added
+
 - The built-in metaschemas ride engine v0.3.23
 
 
