@@ -261,3 +261,31 @@ fn builtin_metaschemas_resolve_in_memory() {
         .unwrap()
         .is_empty());
 }
+
+#[test]
+fn unicode_property_escapes() {
+    // \p{...} since engine 0.3.24: generated category tables
+    let letter = Schema::compile(r#"{"properties":{"k":{"pattern":"^\\p{Letter}+$"}}}"#).unwrap();
+    assert!(letter
+        .validate("k = \"\u{3c0}\"\n".as_bytes())
+        .unwrap()
+        .is_empty());
+    assert_eq!(
+        letter
+            .validate(
+                br#"k = "123"
+"#
+            )
+            .unwrap()
+            .len(),
+        1
+    );
+    let neg = Schema::compile(r#"{"properties":{"k":{"pattern":"^\\P{Letter}+$"}}}"#).unwrap();
+    assert!(neg
+        .validate(
+            br#"k = "123"
+"#
+        )
+        .unwrap()
+        .is_empty());
+}
