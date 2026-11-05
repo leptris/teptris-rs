@@ -289,3 +289,45 @@ fn unicode_property_escapes() {
         .unwrap()
         .is_empty());
 }
+
+#[test]
+fn dialect_gated_formats() {
+    // engine 0.3.25: a declared dialect annotates format/content*;
+    // the assertion dialect opts back in
+    let plain = Schema::compile(r#"{"properties":{"k":{"format":"email"}}}"#).unwrap();
+    assert_eq!(
+        plain
+            .validate(
+                br#"k = "2962"
+"#
+            )
+            .unwrap()
+            .len(),
+        1
+    );
+    let anno = Schema::compile(
+        r#"{"$schema":"https://json-schema.org/draft/2020-12/schema","properties":{"k":{"format":"email"}}}"#,
+    )
+    .unwrap();
+    assert!(anno
+        .validate(
+            br#"k = "2962"
+"#
+        )
+        .unwrap()
+        .is_empty());
+    let assertion = Schema::compile(
+        r#"{"$schema":"https://json-schema.org/draft/2020-12/format-assertion","properties":{"k":{"format":"email"}}}"#,
+    )
+    .unwrap();
+    assert_eq!(
+        assertion
+            .validate(
+                br#"k = "2962"
+"#
+            )
+            .unwrap()
+            .len(),
+        1
+    );
+}
