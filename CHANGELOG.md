@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Dialect-gated format/content ride engine v0.3.25
+
+
+### Other
+
+- Release v0.3.24
+
+
+### Added
+
 - The Unicode property escapes ride engine v0.3.24
 
 
