@@ -12,43 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The long-tail escape fix rides engine v0.3.26
 
 
-### Other
-
-- The dialect comment names engine 0.3.26
-
-- Release v0.3.25
-
-
-### Added
-
-- Dialect-gated format/content ride engine v0.3.25
-
-
-### Other
-
-- Release v0.3.24
-
-
-### Added
-
-- The Unicode property escapes ride engine v0.3.24
-
-
-### Other
-
-- Release v0.3.23
-
-
-### Added
-
-- The built-in metaschemas ride engine v0.3.23
-
-
-### Fixed
-
-- The policy-2 enum assertions follow the 2020-12 numeric identity
-
-
 ## [0.3.22] - 2026-11-03
 
 ### Added
