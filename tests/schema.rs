@@ -331,3 +331,24 @@ fn dialect_gated_formats() {
         1
     );
 }
+
+#[test]
+fn compiles_long_plain_tail_after_escape() {
+    // engine 0.3.26: the schema JSON reader sized the escaped-string
+    // rebuild from the plain prefix alone; a long plain tail after the
+    // first escape wrote past the arena block (fuzz finding)
+    let mut json = String::from("{\"description\":\"A\\u00e9");
+    json.push_str(&"B".repeat(128 * 1024));
+    json.push_str("\"}");
+    let schema = Schema::compile(&json).unwrap();
+    assert_eq!(
+        schema
+            .validate(
+                br#"k = 1
+"#
+            )
+            .unwrap()
+            .len(),
+        0
+    );
+}
