@@ -12,6 +12,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The long-tail escape fix rides engine v0.3.26
 
 
+### Other
+
+- Dedupe the 0.3.26 section
+
+- Release v0.3.26
+
+- The dialect comment names engine 0.3.26
+
+- Release v0.3.25
+
+
+### Added
+
+- The long-tail escape fix rides engine v0.3.26
+
+
 ## [0.3.22] - 2026-11-03
 
 ### Added
