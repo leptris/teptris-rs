@@ -292,7 +292,7 @@ fn unicode_property_escapes() {
 
 #[test]
 fn dialect_gated_formats() {
-    // engine 0.3.25: a declared dialect annotates format/content*;
+    // engine 0.3.26: a declared dialect annotates format/content*;
     // the assertion dialect opts back in
     let plain = Schema::compile(r#"{"properties":{"k":{"format":"email"}}}"#).unwrap();
     assert_eq!(
