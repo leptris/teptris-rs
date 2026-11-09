@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Engine 0.3.27 rides - the crate matches the engine version
+
+
+### Added
+
 - The long-tail escape fix rides engine v0.3.26
 
 
