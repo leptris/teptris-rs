@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Engine 0.3.27 rides - the crate matches the engine version
 
+
+### Other
+
+- 0.3.26 dated, 0.3.27 unreleased
+
+- Release v0.3.27
+
+
+### Added
+
+- Engine 0.3.27 rides - the crate matches the engine version
+
 ## [0.3.26] - 2026-11-07
 
 ### Added
